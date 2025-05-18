@@ -17,6 +17,7 @@ int main(void)
     // Carrega texturas
     Texture2D texChao   = LoadTexture("chao_1200x800.png");
     Texture2D texParede = LoadTexture("parede.png");
+    Texture2D texVida   = LoadTexture("vida.png");
     Texture2D texNorte  = LoadTexture("jogador-norte.png");
     Texture2D texSul    = LoadTexture("jogador-sul.png");
     Texture2D texLeste  = LoadTexture("jogador-leste.png");
@@ -70,8 +71,37 @@ int main(void)
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
+        int vidas = 3;
+        int margem = 10;
+        int nivel = 1;
+        int score = 0;
+
         // Barra de status
         DrawRectangle(0, 0, LARGURA, ALT_STATUS, BLACK);
+
+        // Corações com escala
+        float alturaDesejada = 20.0f;
+        float escalaVida = alturaDesejada / texVida.height;
+
+        DrawText("VIDAS:", margem, 10, 20, WHITE);
+
+        // Calcula onde começam os corações (logo após o texto)
+        int larguraVidas = MeasureText("VIDAS:", 20);  // mede largura do texto "VIDAS:"
+        int coracaoX = margem + larguraVidas + 10;     // 10 pixels de espaço depois do texto
+
+        for (int i = 0; i < vidas; i++) {
+                DrawTextureEx(
+                texVida,
+                (Vector2){ coracaoX + i * (texVida.width * escalaVida + 5), 10 },
+                0.0f,
+                escalaVida,
+                WHITE
+                );
+        }
+        // Nível e Score
+        int xDepoisDaVida = coracaoX + vidas * (texVida.width * escalaVida + 5);
+        DrawText(TextFormat("NIVEL: %d", nivel), xDepoisDaVida + 20, 10, 20, WHITE);
+        DrawText(TextFormat("ESCORE: %d", score), xDepoisDaVida + 140, 10, 20, WHITE);
 
         // Chão
         DrawTexture(texChao, 0, ALT_STATUS, WHITE);
@@ -110,6 +140,7 @@ int main(void)
     // Libera recursos e fecha
     UnloadTexture(texChao);
     UnloadTexture(texParede);
+    UnloadTexture(texVida);
     UnloadTexture(texNorte);
     UnloadTexture(texSul);
     UnloadTexture(texLeste);
