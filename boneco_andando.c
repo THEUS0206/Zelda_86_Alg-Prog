@@ -1,6 +1,4 @@
 #include "raylib.h"
-#include <stdlib.h>
-#include <time.h>
 
 #define LARGURA       1200
 #define ALTURA        860
@@ -8,7 +6,7 @@
 #define CELULA        50
 #define COLUNAS       24
 #define LINHAS        16
-#define INTERVALO_MOV 0.10f // 150 ms entre passos
+
 
 int main(void)
 {
@@ -27,6 +25,7 @@ int main(void)
     // Posição inicial (em células)
     int px = COLUNAS / 2;
     int py = LINHAS / 2;
+
     // Orientação atual do sprite
     Texture2D *skin = &texSul;
 
@@ -47,33 +46,18 @@ int main(void)
         }
     }
 
-// Garante que posição inicial esteja livre
+    // Garante que posição inicial esteja livre
     matriz_mapa[py][px] = 0;
-
-     // Variável para controlar intervalo entre movimentos
-    float tempoMovimento = 0.0f;
 
     // Loop principal do jogo
     while (!WindowShouldClose())
     {
-        float tempo = GetFrameTime();
-        tempoMovimento += tempo;
-
-        // Calcula próxima posição conforme tecla
         int nx = px;
         int ny = py;
-         if (tempoMovimento >= INTERVALO_MOV) {
-            if (IsKeyDown(KEY_UP))    { ny--; skin = &texNorte; }
-            else if (IsKeyDown(KEY_DOWN))  { ny++; skin = &texSul; }
-            else if (IsKeyDown(KEY_LEFT))  { nx--; skin = &texOeste; }
-            else if (IsKeyDown(KEY_RIGHT)) { nx++; skin = &texLeste; }
-
-            if (nx >= 0 && nx < COLUNAS && ny >= 0 && ny < LINHAS && matriz_mapa[ny][nx] == 0) {
-                px = nx;
-                py = ny;
-            }
-            tempoMovimento = 0.0f;
-        }
+        if (IsKeyPressed(KEY_UP))    { ny--; skin = &texNorte; }
+        if (IsKeyPressed(KEY_DOWN))  { ny++; skin = &texSul;   }
+        if (IsKeyPressed(KEY_LEFT))  { nx--; skin = &texOeste; }
+        if (IsKeyPressed(KEY_RIGHT)) { nx++; skin = &texLeste; }
 
         // Atualiza posição se dentro dos limites e não houver parede
         if (nx >= 0 && nx < COLUNAS && ny >= 0 && ny < LINHAS && matriz_mapa[ny][nx] == 0)
@@ -112,21 +96,12 @@ int main(void)
         // Jogador - usando DrawTexturePro para escala personalizada
         DrawTexturePro(
             *skin,
-            (Rectangle)
-        {
-            0, 0, (float)skin->width, (float)skin->height
-        },          // parte da textura
-        (Rectangle)
-        {
-            (float)(px * CELULA), (float)(ALT_STATUS + py * CELULA),  // posição na tela
-            (float)CELULA, (float)CELULA
-        },                            // tamanho no destino
-        (Vector2)
-        {
-            0, 0
-        },   // origem para rotação
-        0.0f,                // rotação
-        WHITE
+            (Rectangle){0, 0, (float)skin->width, (float)skin->height},           // parte da textura
+            (Rectangle){(float)(px * CELULA), (float)(ALT_STATUS + py * CELULA),  // posição na tela
+            (float)CELULA, (float)CELULA},                                        // tamanho no destino
+            (Vector2){0, 0},   // origem para rotação
+            0.0f,              // rotação
+            WHITE
         );
 
         EndDrawing();
