@@ -6,8 +6,8 @@
 #define ALTURA        860
 #define ALT_STATUS    60
 #define CELULA        50
-#define G_COLS        24
-#define G_LINS        16
+#define COLUNAS        24
+#define LINHAS        16
 
 int main(void) {
     // Inicialização da janela
@@ -23,8 +23,8 @@ int main(void) {
     Texture2D texOeste  = LoadTexture("jogador-oeste.png");
 
     // Posição inicial (em células)
-    int px = G_COLS / 2;
-    int py = G_LINS / 2;
+    int px = COLUNAS / 2;
+    int py = LINHAS / 2;
     // Orientação atual do sprite
     Texture2D *skin = &texSul;
 
@@ -33,9 +33,9 @@ int main(void) {
 
     // Gera matriz de paredes (1 = parede, 0 = chão)
     srand(time(NULL));
-    int grid[G_LINS][G_COLS];
-    for (int y = 0; y < G_LINS; y++) {
-        for (int x = 0; x < G_COLS; x++) {
+    int grid[LINHAS][COLUNAS];
+    for (int y = 0; y < LINHAS; y++) {
+        for (int x = 0; x < COLUNAS; x++) {
             // Parede em aprox. 15% das células
             grid[y][x] = (rand() % 100 < 15) ? 1 : 0;
         }
@@ -54,7 +54,7 @@ int main(void) {
         if (IsKeyPressed(KEY_RIGHT)) { nx++; skin = &texLeste; }
 
         // Atualiza posição se dentro dos limites e não houver parede
-        if (nx >= 0 && nx < G_COLS && ny >= 0 && ny < G_LINS && grid[ny][nx] == 0) {
+        if (nx >= 0 && nx < COLUNAS && ny >= 0 && ny < LINHAS && grid[ny][nx] == 0) {
             px = nx;
             py = ny;
         }
@@ -74,8 +74,8 @@ int main(void) {
         DrawTexture(texChao, 0, ALT_STATUS, WHITE);
 
         // Paredes
-        for (int y = 0; y < G_LINS; y++) {
-            for (int x = 0; x < G_COLS; x++) {
+        for (int y = 0; y < LINHAS; y++) {
+            for (int x = 0; x < COLUNAS; x++) {
                 if (grid[y][x] == 1) {
                     DrawTextureEx(texParede,
                                   (Vector2){ x * CELULA, ALT_STATUS + y * CELULA },
