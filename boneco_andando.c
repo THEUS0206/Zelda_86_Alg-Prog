@@ -59,8 +59,9 @@ int main(void) {
             py = ny;
         }
 
-        // Escala do jogador (pode variar se texturas tiverem tamanhos diferentes)
-        float escalaJogador = (float)CELULA / skin->width;
+        // Escala do jogador (separada em X e Y)
+       // float escalaJogadorX = (float)CELULA / skin->width;
+       // float escalaJogadorY = (float)CELULA / skin->height;
 
         // Desenha tudo
         BeginDrawing();
@@ -83,10 +84,16 @@ int main(void) {
             }
         }
 
-        // Jogador
-        DrawTextureEx(*skin,
-                      (Vector2){ px * CELULA, ALT_STATUS + py * CELULA },
-                      0.0f, escalaJogador, WHITE);
+        // Jogador - usando DrawTexturePro para escala personalizada
+        DrawTexturePro(
+            *skin,
+            (Rectangle){ 0, 0, (float)skin->width, (float)skin->height },          // parte da textura
+            (Rectangle){ (float)(px * CELULA), (float)(ALT_STATUS + py * CELULA),  // posição na tela
+                         (float)CELULA, (float)CELULA },                            // tamanho no destino
+            (Vector2){ 0, 0 },   // origem para rotação
+            0.0f,                // rotação
+            WHITE
+        );
 
         EndDrawing();
     }
