@@ -3,11 +3,11 @@
 #include <time.h>
 
 #define LARGURA       1200
-#define ALTURA        800
+#define ALTURA        860
 #define ALT_STATUS    60
 #define CELULA        50
-#define G_COLS        (LARGURA / CELULA)
-#define G_LINS        ((ALTURA - ALT_STATUS) / CELULA)
+#define G_COLS        24
+#define G_LINS        16
 
 int main(void) {
     // Inicialização da janela
@@ -15,7 +15,7 @@ int main(void) {
     SetTargetFPS(60);
 
     // Carrega texturas
-    Texture2D texChao   = LoadTexture("chao_1200x740.png");
+    Texture2D texChao   = LoadTexture("chao_1200x800.png");
     Texture2D texParede = LoadTexture("parede.png");
     Texture2D texNorte  = LoadTexture("jogador-norte.png");
     Texture2D texSul    = LoadTexture("jogador-sul.png");
