@@ -9,7 +9,8 @@
 #define COLUNAS        24
 #define LINHAS        16
 
-int main(void) {
+int main(void)
+{
     // Inicialização da janela
     InitWindow(LARGURA, ALTURA, "ZELDASSO");
     SetTargetFPS(60);
@@ -28,40 +29,69 @@ int main(void) {
     // Orientação atual do sprite
     Texture2D *skin = &texSul;
 
-    // Escalas para paredes e jogador
+    // Escalas para paredes
     float escalaParede = (float)CELULA / texParede.width;
 
     // Gera matriz de paredes (1 = parede, 0 = chão)
-    srand(time(NULL));
-    int grid[LINHAS][COLUNAS];
+    int matriz_mapa[LINHAS][COLUNAS];
     for (int y = 0; y < LINHAS; y++) {
-        for (int x = 0; x < COLUNAS; x++) {
-            // Parede em aprox. 15% das células
-            grid[y][x] = (rand() % 100 < 15) ? 1 : 0;
+    for (int x = 0; x < COLUNAS; x++) {
+        matriz_mapa[y][x] = 0;
+    }
+}
+
+    for (int y = 0; y < LINHAS; y++)
+    {
+        for (int x = 0; x < COLUNAS; x++)
+        {
+            if (y == 0 || y == LINHAS - 1 || x == 0 || x == COLUNAS - 1)
+            {
+                matriz_mapa[y][x] = 1;
+            }
         }
     }
-    // Garante que posição inicial esteja livre
-    grid[py][px] = 0;
+
+// Garante que posição inicial esteja livre
+    matriz_mapa[py][px] = 0;
+
 
     // Loop principal do jogo
-    while (!WindowShouldClose()) {
+    while (!WindowShouldClose())
+    {
         // Calcula próxima posição conforme tecla
         int nx = px;
         int ny = py;
-        if (IsKeyPressed(KEY_UP))    { ny--; skin = &texNorte; }
-        if (IsKeyPressed(KEY_DOWN))  { ny++; skin = &texSul; }
-        if (IsKeyPressed(KEY_LEFT))  { nx--; skin = &texOeste; }
-        if (IsKeyPressed(KEY_RIGHT)) { nx++; skin = &texLeste; }
+        if (IsKeyPressed(KEY_UP))
+        {
+            ny--;
+            skin = &texNorte;
+        }
+        if (IsKeyPressed(KEY_DOWN))
+        {
+            ny++;
+            skin = &texSul;
+        }
+        if (IsKeyPressed(KEY_LEFT))
+        {
+            nx--;
+            skin = &texOeste;
+        }
+        if (IsKeyPressed(KEY_RIGHT))
+        {
+            nx++;
+            skin = &texLeste;
+        }
 
         // Atualiza posição se dentro dos limites e não houver parede
-        if (nx >= 0 && nx < COLUNAS && ny >= 0 && ny < LINHAS && grid[ny][nx] == 0) {
+        if (nx >= 0 && nx < COLUNAS && ny >= 0 && ny < LINHAS && matriz_mapa[ny][nx] == 0)
+        {
             px = nx;
             py = ny;
         }
 
         // Escala do jogador (separada em X e Y)
-       // float escalaJogadorX = (float)CELULA / skin->width;
-       // float escalaJogadorY = (float)CELULA / skin->height;
+        // float escalaJogadorX = (float)CELULA / skin->width;
+        // float escalaJogadorY = (float)CELULA / skin->height;
 
         // Desenha tudo
         BeginDrawing();
@@ -74,12 +104,18 @@ int main(void) {
         DrawTexture(texChao, 0, ALT_STATUS, WHITE);
 
         // Paredes
-        for (int y = 0; y < LINHAS; y++) {
-            for (int x = 0; x < COLUNAS; x++) {
-                if (grid[y][x] == 1) {
+        for (int y = 0; y < LINHAS; y++)
+        {
+            for (int x = 0; x < COLUNAS; x++)
+            {
+                if (matriz_mapa[y][x] == 1)
+                {
                     DrawTextureEx(texParede,
-                                  (Vector2){ x * CELULA, ALT_STATUS + y * CELULA },
-                                  0.0f, escalaParede, WHITE);
+                                  (Vector2)
+                    {
+                        x * CELULA, ALT_STATUS + y * CELULA
+                    },
+                    0.0f, escalaParede, WHITE);
                 }
             }
         }
@@ -87,12 +123,21 @@ int main(void) {
         // Jogador - usando DrawTexturePro para escala personalizada
         DrawTexturePro(
             *skin,
-            (Rectangle){ 0, 0, (float)skin->width, (float)skin->height },          // parte da textura
-            (Rectangle){ (float)(px * CELULA), (float)(ALT_STATUS + py * CELULA),  // posição na tela
-                         (float)CELULA, (float)CELULA },                            // tamanho no destino
-            (Vector2){ 0, 0 },   // origem para rotação
-            0.0f,                // rotação
-            WHITE
+            (Rectangle)
+        {
+            0, 0, (float)skin->width, (float)skin->height
+        },          // parte da textura
+        (Rectangle)
+        {
+            (float)(px * CELULA), (float)(ALT_STATUS + py * CELULA),  // posição na tela
+            (float)CELULA, (float)CELULA
+        },                            // tamanho no destino
+        (Vector2)
+        {
+            0, 0
+        },   // origem para rotação
+        0.0f,                // rotação
+        WHITE
         );
 
         EndDrawing();
