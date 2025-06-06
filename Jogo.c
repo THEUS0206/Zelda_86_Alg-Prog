@@ -6,154 +6,173 @@
 #include <math.h>
 
 // Constantes do jogo
-#define MAP_ROWS 16
-#define MAP_COLS 24
-#define BLOCK_SIZE 50
-#define STATUS_BAR_HEIGHT 60
-#define GAME_AREA_HEIGHT 800
-#define SCREEN_WIDTH 1200
-#define SCREEN_HEIGHT (STATUS_BAR_HEIGHT + GAME_AREA_HEIGHT)
-#define MAX_MONSTERS 10
-#define MAX_EXTRA_LIVES 5
-#define MAX_LEVELS 99
-#define SWORD_RANGE 3
+#define LINHAS 16
+#define COLUNAS 24
+#define CELULA 50
+#define BARRA_STATUS 60
+#define MAPA_AREA 800
+#define LARGURA_TELA 1200
+#define ALTURA_TELA ( BARRA_STATUS + MAPA_AREA )
+#define MAX_MONSTROS 10
+#define MAX_VIDA_EXTRA 5
+#define MAX_NIVEIS 99
+#define ALCANCE_ESPADA 3
 
 // Estruturas de dados
-typedef enum { NORTH, SOUTH, EAST, WEST, NONE } Direction;
+typedef enum { NORTE, SUL, LESTE, OESTE } Direcao_t;
 
 typedef struct {
     int x, y;
-    Direction dir;
+    Direcao_t direcao;
     int score;
-    int lives;
-    bool hasSword;
-    bool swordActive;
-    float swordActiveTime;
-} Player;
+    int vidas;
+    bool tem_espada;
+    bool ativa_espada;
+    float cooldown_espada;
+} Jogador_t;
 
 typedef struct {
     int x, y;
-    Direction dir;
-    int points;
-    bool alive;
-    float moveTimer;
-} Monster;
+    Direcao_t direcao;
+    int pontos;
+    bool vivo;
+    float cooldown_mover;
+} Monstro_t;
 
 typedef struct {
     int x, y;
-    bool collected;
-} ExtraLife;
+    bool coletado;
+} Vida_Extra_t;
 
 typedef struct {
     int x, y;
-    bool collected;
-} Sword;
+    bool coletado;
+} Espada_t;
 
 typedef struct {
     char nome[20];
     int score;
-} TIPO_SCORE;
+} Score_t;
 
-typedef enum { MENU, PLAYING, PAUSED, GAMEOVER, VICTORY, SCOREBOARD } GameState;
+typedef enum { MENU, JOGANDO, PAUSA, DERROTA, VITORIA, SCOREBOARD } Estado_jogo_t;
 
 // Variáveis globais permitidas
-char gameMap[MAP_ROWS][MAP_COLS];
-Texture2D playerTextures[4];  // N, S, E, W
-Texture2D monsterTexture;
-Texture2D wallTexture;
-Texture2D swordTexture;
-Texture2D heartTexture;
-Texture2D groundTexture;
-Font gameFont;
+char mapa[LINHAS][COLUNAS];
+Texture2D textura_jogador[4];  // N, S, L, O
+Texture2D textura_monstros[4];
+Texture2D textura_parede;
+Texture2D textura_espada;
+Texture2D textura_vida;
+Texture2D textura_chao;
+Font fonte_jogo;
 
 // Protótipos de funções
-void LoadMap(int level);
-void InitGame(GameState *state, int *currentLevel, Player *player, 
-              Monster monsters[], int *numMonsters, 
-              ExtraLife extraLives[], int *numExtraLives, 
-              Sword *sword);
-void UpdateGame(GameState *state, int *currentLevel, Player *player, 
-                Monster monsters[], int *numMonsters, 
-                ExtraLife extraLives[], int *numExtraLives, 
-                Sword *sword);
-void DrawGame(Player *player, Monster monsters[], int numMonsters, 
-              ExtraLife extraLives[], int numExtraLives, 
-              Sword *sword, int currentLevel);
-void DrawMenu(GameState *state, int *menuSelection);
-void DrawScoreboard(TIPO_SCORE ranking[]);
-void DrawPauseMenu(int *pauseSelection);
-void DrawGameOverMenu(int *gameOverSelection);
-void DrawVictoryScreen(int *victorySelection);
-void UpdateRanking(int score, TIPO_SCORE ranking[]);
-void DrawStatusBar(Player *player, int currentLevel);
-void MovePlayer(Player *player, int key);
-void MoveMonsters(Monster monsters[], int numMonsters);
-void CheckCollisions(GameState *state, Player *player, 
-                     Monster monsters[], int numMonsters, 
-                     ExtraLife extraLives[], int numExtraLives, 
-                     Sword *sword);
-void UseSword(Player *player, Monster monsters[], int numMonsters);
-void LoadTextures();
-void UnloadTextures();
-bool LoadRanking(TIPO_SCORE ranking[]);
-void SaveRanking(TIPO_SCORE ranking[]);
-void ResetLevel(int level, Player *player, Monster monsters[], int *numMonsters, 
-                ExtraLife extraLives[], int *numExtraLives, Sword *sword);
+void Carrega_mapa(int level);
+
+void Comeca_jogo(Estado_jogo_t *estado, int *niveis_atual, Jogador_t *jogador,
+              Monstro_t monstros[], int *numero_monstros,
+              Vida_Extra_t vidas_extra[], int *numero_vidas_extra,
+              Espada_t *espada);
+
+void Atualiza_jogo(Estado_jogo_t *Estado, int *nivel_atual, Jogador_t *jogador,
+                Monstro_t monstros[], int *numero_monstros,
+                Vida_Extra_t vidas_extra[], int *numero_vidas_extra,
+                Espada_t *espada);
+
+void Desenha_jogo( Jogador_t *jogador, Monstro_t monstros[], int numero_monstros,
+              Vida_Extra_t vidas_extra[], int numero_vidas_extra,
+              Espada_t *espada, int nivel_atual);
+
+void Desenha_menu(Estado_jogo_t *estado, int *selecao_menu);
+
+void Desenha_scoreboard(Score_t ranking[]);
+
+void Desenha_menu_pausa(int *selecao_pause);
+
+void Desenha_menu_derrota(int *selecao_derrota);
+
+void Desenha_menu_vitoria(int *selecao_vitoria);
+
+void Atualiza_ranking(int score, Score_t ranking[]);
+
+void Desenha_barra_status(Jogador_t *jogador, int level_atual);
+
+void Movimento_jogador(Jogador_t *jogador, int tecla);
+
+void Movimento_monstros(Monstro_t monstros[], int numero_monstros);
+
+void Checar_colisoes(Estado_jogo_t *estado, Jogador_t *jogador,
+                     Monstro_t monstros[], int numero_monstros,
+                     Vida_Extra_t vidas_extra[], int numero_vidas_extra,
+                     Espada_t *espada);
+
+void Usar_espada(Jogador_t *jogador, Monstro_t monstros[], int numero_monstros);
+
+void Carrega_texturas();
+
+void Descarrega_texturas();
+
+bool Carrega_ranking(Score_t ranking[]);
+
+void Salva_ranking(Score_t ranking[]);
+
+void Reseta_nivel(int level, Jogador_t *jogador, Monstro_t monstros[], int *numero_monstros,
+                Vida_Extra_t vidas_extra[], int *numero_vidas_extra, Espada_t *espada);
 
 int main(void) {
     // Inicialização da janela
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Zelda INF");
+    InitWindow(LARGURA_TELA, ALTURA_TELA, "Zelda INF");
     InitAudioDevice();
     SetTargetFPS(60);
-    
+
     // Carregar recursos
-    LoadTextures();
-    gameFont = LoadFontEx("fonts/arial.ttf", 24, 0, 0);
-    
+    Carrega_texturas();
+    fonte_jogo = GetFontDefault();
+
     // Variáveis de estado do jogo
-    GameState state = MENU;
-    int currentLevel = 1;
-    int menuSelection = 0;
-    int pauseSelection = 0;
-    int gameOverSelection = 0;
-    int victorySelection = 0;
-    
+    Estado_jogo_t estado = MENU;
+    int level_atual = 1;
+    int selecao_menu = 0;
+    int selecao_pause = 0;
+    int selecao_derrota = 0;
+    int selecao_vitoria = 0;
+
     // Entidades do jogo
-    Player player;
-    Monster monsters[MAX_MONSTERS];
-    ExtraLife extraLives[MAX_EXTRA_LIVES];
-    Sword sword;
-    int numMonsters = 0;
-    int numExtraLives = 0;
-    
+    Jogador_t jogador;
+    Monstro_t monstros[MAX_MONSTROS];
+    Vida_Extra_t vidas_extra[MAX_VIDA_EXTRA];
+    Espada_t espada;
+    int numero_monstros = 0;
+    int numero_vidas_extra = 0;
+
     // Ranking
-    TIPO_SCORE ranking[5];
-    if (!LoadRanking(ranking)) {
+    Score_t ranking[5];
+    if (!Carrega_ranking(ranking)) {
         // Inicializar ranking padrão se arquivo não existir
         for (int i = 0; i < 5; i++) {
             sprintf(ranking[i].nome, "Jogador %d", i+1);
             ranking[i].score = 1000 - i * 200;
         }
     }
-    
+
     // Loop principal do jogo
     while (!WindowShouldClose()) {
-        switch (state) {
+        switch (estado) {
             case MENU:
                 // Navegação no menu
-                if (IsKeyPressed(KEY_DOWN)) menuSelection = (menuSelection + 1) % 3;
-                if (IsKeyPressed(KEY_UP)) menuSelection = (menuSelection + 2) % 3;
-                
+                if (IsKeyPressed(KEY_DOWN)) selecao_menu = (selecao_menu + 1) % 3;
+                if (IsKeyPressed(KEY_UP)) selecao_menu = (selecao_menu + 2) % 3;
+
                 if (IsKeyPressed(KEY_ENTER)) {
-                    switch (menuSelection) {
+                    switch (selecao_menu) {
                         case 0: // Novo jogo
-                            currentLevel = 1;
-                            InitGame(&state, &currentLevel, &player, monsters, &numMonsters, 
-                                     extraLives, &numExtraLives, &sword);
-                            state = PLAYING;
+                            level_atual = 1;
+                            Comeca_jogo(&estado, &level_atual, &jogador, monstros, &numero_monstros,
+                                     vidas_extra, &numero_vidas_extra, &espada);
+                            estado = JOGANDO;
                             break;
                         case 1: // Scoreboard
-                            state = SCOREBOARD;
+                            estado = SCOREBOARD;
                             break;
                         case 2: // Sair
                             CloseWindow();
@@ -161,24 +180,24 @@ int main(void) {
                     }
                 }
                 break;
-                
-            case PLAYING:
-                UpdateGame(&state, &currentLevel, &player, monsters, &numMonsters, 
-                           extraLives, &numExtraLives, &sword);
+
+            case JOGANDO:
+                Atualiza_jogo(&estado, &level_atual, &jogador, monstros, &numero_monstros,
+                           vidas_extra, &numero_vidas_extra, &espada);
                 break;
-                
-            case PAUSED:
+
+            case PAUSA:
                 // Navegação no menu de pausa
-                if (IsKeyPressed(KEY_DOWN)) pauseSelection = (pauseSelection + 1) % 3;
-                if (IsKeyPressed(KEY_UP)) pauseSelection = (pauseSelection + 2) % 3;
-                
+                if (IsKeyPressed(KEY_DOWN)) selecao_pause = (selecao_pause + 1) % 3;
+                if (IsKeyPressed(KEY_UP)) selecao_pause = (selecao_pause + 2) % 3;
+
                 if (IsKeyPressed(KEY_ENTER)) {
-                    switch (pauseSelection) {
+                    switch (selecao_pause) {
                         case 0: // Continuar
-                            state = PLAYING;
+                            estado = JOGANDO;
                             break;
                         case 1: // Voltar ao menu
-                            state = MENU;
+                            estado = MENU;
                             break;
                         case 2: // Sair
                             CloseWindow();
@@ -186,39 +205,39 @@ int main(void) {
                     }
                 }
                 break;
-                
-            case GAMEOVER:
+
+            case DERROTA:
                 // Navegação no menu de game over
-                if (IsKeyPressed(KEY_DOWN)) gameOverSelection = (gameOverSelection + 1) % 3;
-                if (IsKeyPressed(KEY_UP)) gameOverSelection = (gameOverSelection + 2) % 3;
-                
+                if (IsKeyPressed(KEY_DOWN)) selecao_derrota = (selecao_derrota + 1) % 3;
+                if (IsKeyPressed(KEY_UP)) selecao_derrota = (selecao_derrota + 2) % 3;
+
                 if (IsKeyPressed(KEY_ENTER)) {
-                    switch (gameOverSelection) {
+                    switch (selecao_derrota) {
                         case 0: // Carregar jogo (não implementado)
                             // Implementar se for requisito extra
                             break;
                         case 1: // Reiniciar jogo
-                            currentLevel = 1;
-                            InitGame(&state, &currentLevel, &player, monsters, &numMonsters, 
-                                     extraLives, &numExtraLives, &sword);
-                            state = PLAYING;
+                            level_atual = 1;
+                            Comeca_jogo(&estado, &level_atual, &jogador, monstros, &numero_monstros,
+                                     vidas_extra, &numero_vidas_extra, &espada);
+                            estado = JOGANDO;
                             break;
                         case 2: // Voltar ao menu
-                            state = MENU;
+                            estado = MENU;
                             break;
                     }
                 }
                 break;
-                
-            case VICTORY:
+
+            case VITORIA:
                 // Navegação na tela de vitória
-                if (IsKeyPressed(KEY_DOWN)) victorySelection = (victorySelection + 1) % 2;
-                if (IsKeyPressed(KEY_UP)) victorySelection = (victorySelection + 1) % 2;
-                
+                if (IsKeyPressed(KEY_DOWN)) selecao_vitoria = (selecao_vitoria + 1) % 2;
+                if (IsKeyPressed(KEY_UP)) selecao_vitoria = (selecao_vitoria + 1) % 2;
+
                 if (IsKeyPressed(KEY_ENTER)) {
-                    switch (victorySelection) {
+                    switch (selecao_vitoria) {
                         case 0: // Voltar ao menu
-                            state = MENU;
+                            estado = MENU;
                             break;
                         case 1: // Sair
                             CloseWindow();
@@ -226,10 +245,10 @@ int main(void) {
                     }
                 }
                 break;
-                
+
             case SCOREBOARD:
                 if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_ESCAPE)) {
-                    state = MENU;
+                    estado = MENU;
                 }
                 break;
         }
@@ -237,591 +256,582 @@ int main(void) {
         // Renderização
         BeginDrawing();
             ClearBackground(RAYWHITE);
-            
-            switch (state) {
+
+            switch (estado) {
                 case MENU:
-                    DrawMenu(&state, &menuSelection);
+                    Desenha_menu(&estado, &selecao_menu);
                     break;
-                    
-                case PLAYING:
-                    DrawGame(&player, monsters, numMonsters, extraLives, numExtraLives, &sword, currentLevel);
+
+                case JOGANDO:
+                    Desenha_jogo(&jogador, monstros, numero_monstros, vidas_extra, numero_vidas_extra, &espada, level_atual);
                     break;
-                    
-                case PAUSED:
-                    DrawGame(&player, monsters, numMonsters, extraLives, numExtraLives, &sword, currentLevel);
-                    DrawPauseMenu(&pauseSelection);
+
+                case PAUSA:
+                    Desenha_jogo(&jogador, monstros, numero_monstros, vidas_extra, numero_vidas_extra, &espada, level_atual);
+                    Desenha_menu_pausa(&selecao_pause);
                     break;
-                    
-                case GAMEOVER:
-                    DrawGameOverMenu(&gameOverSelection);
+
+                case DERROTA:
+                    Desenha_menu_derrota(&selecao_derrota);
                     break;
-                    
-                case VICTORY:
-                    DrawVictoryScreen(&victorySelection);
+
+                case VITORIA:
+                    Desenha_menu_vitoria(&selecao_vitoria);
                     break;
-                    
+
                 case SCOREBOARD:
-                    DrawScoreboard(ranking);
+                    Desenha_scoreboard(ranking);
                     break;
             }
         EndDrawing();
     }
 
     // Salvar ranking e liberar recursos
-    SaveRanking(ranking);
-    UnloadTextures();
+    Salva_ranking(ranking);
+    Descarrega_texturas();
     CloseAudioDevice();
     CloseWindow();
     return 0;
 }
 
-void LoadMap(int level) {
-    char filename[20];
-    sprintf(filename, "mapa%02d.txt", level);
-    
-    FILE *file = fopen(filename, "r");
-    if (!file) {
-        TraceLog(LOG_ERROR, "Falha ao carregar o mapa: %s", filename);
-        return;
+void Carrega_mapa(int level) {
+    (void)level;
+    // Preenche todo o mapa com caminho livre ('.')
+    for (int i = 0; i < LINHAS; i++) {
+        for (int j = 0; j < COLUNAS; j++) {
+            mapa[i][j] = '.';
+        }
     }
 
-    for (int i = 0; i < MAP_ROWS; i++) {
-        for (int j = 0; j < MAP_COLS; j++) {
-            int c = fgetc(file);
-            if (c == EOF) break;
-            gameMap[i][j] = (char)c;
+    // Cria paredes nas bordas do mapa
+    for (int i = 0; i < LINHAS; i++) {
+        for (int j = 0; j < COLUNAS; j++) {
+            // Se for borda superior/inferior ou lateral
+            if (i == 0 || i == LINHAS-1 || j == 0 || j == COLUNAS-1) {
+                mapa[i][j] = 'P'; // Parede
+            }
         }
-        // Ignorar quebra de linha
-        fgetc(file);
     }
-    fclose(file);
 }
 
-void InitGame(GameState *state, int *currentLevel, Player *player, 
-              Monster monsters[], int *numMonsters, 
-              ExtraLife extraLives[], int *numExtraLives, 
-              Sword *sword) {
+void Comeca_jogo(Estado_jogo_t *estado, int *level_atual, Jogador_t *jogador,
+              Monstro_t monstros[], int *numero_monstros,
+              Vida_Extra_t vidas_extra[], int *numero_vidas_extra,
+              Espada_t *espada) {
     // Carregar mapa
-    LoadMap(*currentLevel);
-    
+
+    Carrega_mapa(*level_atual);
+
     // Inicializar jogador
-    player->x = 0;
-    player->y = 0;
-    player->dir = SOUTH;
-    player->score = 0;
-    player->lives = 3;
-    player->hasSword = false;
-    player->swordActive = false;
-    player->swordActiveTime = 0.0f;
-    
+    jogador->x = 0;
+    jogador->y = 0;
+    jogador->direcao = SUL;
+    jogador->score = 0;
+    jogador->vidas = 3;
+    jogador->tem_espada = false;
+    jogador->ativa_espada = false;
+    jogador->cooldown_espada = 0.0f;
+
     // Encontrar posições iniciais
-    *numMonsters = 0;
-    *numExtraLives = 0;
-    sword->collected = false;
-    
-    for (int i = 0; i < MAP_ROWS; i++) {
-        for (int j = 0; j < MAP_COLS; j++) {
-            switch (gameMap[i][j]) {
+    *numero_monstros = 0;
+    *numero_vidas_extra = 0;
+    espada->coletado = false;
+
+    for (int i = 0; i < LINHAS; i++) {
+        for (int j = 0; j < COLUNAS; j++) {
+            switch (mapa[i][j]) {
                 case 'J': // Jogador
-                    player->x = j;
-                    player->y = i;
+                    jogador->x = j;
+                    jogador->y = i;
                     break;
-                    
+
                 case 'M': // Monstro
-                    if (*numMonsters < MAX_MONSTERS) {
-                        monsters[*numMonsters].x = j;
-                        monsters[*numMonsters].y = i;
-                        monsters[*numMonsters].dir = rand() % 4;
-                        monsters[*numMonsters].points = rand() % 101;
-                        monsters[*numMonsters].alive = true;
-                        monsters[*numMonsters].moveTimer = 0.0f;
-                        (*numMonsters)++;
+                    if (*numero_monstros < MAX_MONSTROS) {
+                        monstros[*numero_monstros].x = j;
+                        monstros[*numero_monstros].y = i;
+                        monstros[*numero_monstros].direcao = rand() % 4;
+                        monstros[*numero_monstros].pontos = rand() % 101;
+                        monstros[*numero_monstros].vivo = true;
+                        monstros[*numero_monstros].cooldown_mover = 0.0f;
+                        (*numero_monstros)++;
                     }
                     break;
-                    
+
                 case 'E': // Espada
-                    sword->x = j;
-                    sword->y = i;
+                    espada->x = j;
+                    espada->y = i;
                     break;
-                    
+
                 case 'V': // Vida extra
-                    if (*numExtraLives < MAX_EXTRA_LIVES) {
-                        extraLives[*numExtraLives].x = j;
-                        extraLives[*numExtraLives].y = i;
-                        extraLives[*numExtraLives].collected = false;
-                        (*numExtraLives)++;
+                    if (*numero_vidas_extra < MAX_VIDA_EXTRA) {
+                        vidas_extra[*numero_vidas_extra].x = j;
+                        vidas_extra[*numero_vidas_extra].y = i;
+                        vidas_extra[*numero_vidas_extra].coletado = false;
+                        (*numero_vidas_extra)++;
                     }
                     break;
             }
         }
     }
-    
-    *state = PLAYING;
+
+    *estado = JOGANDO;
 }
 
-void UpdateGame(GameState *state, int *currentLevel, Player *player, 
-                Monster monsters[], int *numMonsters, 
-                ExtraLife extraLives[], int *numExtraLives, 
-                Sword *sword) {
+void Atualiza_jogo(Estado_jogo_t *estado, int *level_atual, Jogador_t *jogador,
+                Monstro_t monstros[], int *numero_monstros,
+                Vida_Extra_t vidas_extra[], int *numero_vidas_extra,
+                Espada_t *espada) {
     // Pausar o jogo
     if (IsKeyPressed(KEY_TAB)) {
-        *state = PAUSED;
+        *estado = PAUSA;
         return;
     }
-    
+
     // Movimento do jogador
-    if (IsKeyPressed(KEY_W) || IsKeyPressed(KEY_UP)) MovePlayer(player, KEY_W);
-    if (IsKeyPressed(KEY_S) || IsKeyPressed(KEY_DOWN)) MovePlayer(player, KEY_S);
-    if (IsKeyPressed(KEY_A) || IsKeyPressed(KEY_LEFT)) MovePlayer(player, KEY_A);
-    if (IsKeyPressed(KEY_D) || IsKeyPressed(KEY_RIGHT)) MovePlayer(player, KEY_D);
-    
+    if (IsKeyPressed(KEY_W) || IsKeyPressed(KEY_UP)) Movimento_jogador(jogador, KEY_W);
+    if (IsKeyPressed(KEY_S) || IsKeyPressed(KEY_DOWN)) Movimento_jogador(jogador, KEY_S);
+    if (IsKeyPressed(KEY_A) || IsKeyPressed(KEY_LEFT)) Movimento_jogador(jogador, KEY_A);
+    if (IsKeyPressed(KEY_D) || IsKeyPressed(KEY_RIGHT)) Movimento_jogador(jogador, KEY_D);
+
     // Ativar espada
-    if (IsKeyPressed(KEY_J) && player->hasSword && !player->swordActive) {
-        player->swordActive = true;
-        player->swordActiveTime = 0.2f; // 0.2 segundos de duração
+    if (IsKeyPressed(KEY_J) && jogador->tem_espada && !jogador->ativa_espada) {
+        jogador->ativa_espada = true;
+        jogador->cooldown_espada = 0.2f; // 0.2 segundos de duração
     }
-    
+
     // Atualizar temporizador da espada
-    if (player->swordActive) {
-        player->swordActiveTime -= GetFrameTime();
-        if (player->swordActiveTime <= 0) {
-            player->swordActive = false;
+    if (jogador->ativa_espada) {
+        jogador->cooldown_espada -= GetFrameTime();
+        if (jogador->cooldown_espada <= 0) {
+            jogador->ativa_espada = false;
         } else {
             // Verificar se a espada atingiu monstros
-            UseSword(player, monsters, *numMonsters);
+            Usar_espada(jogador, monstros, *numero_monstros);
         }
     }
-    
+
     // Movimento dos monstros
-    MoveMonsters(monsters, *numMonsters);
-    
+    Movimento_monstros(monstros, *numero_monstros);
+
     // Verificar colisões
-    CheckCollisions(state, player, monsters, *numMonsters, 
-                   extraLives, *numExtraLives, sword);
-    
+    Checar_colisoes(estado, jogador, monstros, *numero_monstros,
+                   vidas_extra, *numero_vidas_extra, espada);
+
     // Verificar vitória na fase
-    bool allMonstersDead = true;
-    for (int i = 0; i < *numMonsters; i++) {
-        if (monsters[i].alive) {
-            allMonstersDead = false;
-            break;
+    bool montros_morreram = true;
+    for (int i = 0; i < *numero_monstros; i++) {
+        if (monstros[i].vivo) {
+            montros_morreram = false;
         }
     }
-    
-    if (allMonstersDead) {
-        (*currentLevel)++;
-        if (*currentLevel > MAX_LEVELS) {
-            *state = VICTORY;
+
+    if (montros_morreram) {
+        (*level_atual)++;
+        if (*level_atual > MAX_NIVEIS) {
+            *estado = VITORIA;
         } else {
-            ResetLevel(*currentLevel, player, monsters, numMonsters, 
-                       extraLives, numExtraLives, sword);
+            Reseta_nivel(*level_atual, jogador, monstros, numero_monstros,
+                       vidas_extra, numero_vidas_extra, espada);
         }
     }
 }
 
-void MovePlayer(Player *player, int key) {
-    int newX = player->x;
-    int newY = player->y;
-    Direction newDir = player->dir;
+void Movimento_jogador(Jogador_t *jogador, int tecla) {
+    int novo_x = jogador->x;
+    int novo_y = jogador->y;
+    Direcao_t nova_direcao = jogador->direcao;
 
-    switch (key) {
+    switch (tecla) {
         case KEY_W:
         case KEY_UP:
-            newY--;
-            newDir = NORTH;
+            novo_y--;
+            nova_direcao = NORTE;
             break;
         case KEY_S:
         case KEY_DOWN:
-            newY++;
-            newDir = SOUTH;
+            novo_y++;
+            nova_direcao = SUL;
             break;
         case KEY_A:
         case KEY_LEFT:
-            newX--;
-            newDir = WEST;
+            novo_x--;
+            nova_direcao = OESTE;
             break;
         case KEY_D:
         case KEY_RIGHT:
-            newX++;
-            newDir = EAST;
+            novo_x++;
+            nova_direcao = LESTE;
             break;
         default:
             return;
     }
 
     // Verificar limites do mapa e colisão com paredes
-    if (newX >= 0 && newX < MAP_COLS && newY >= 0 && newY < MAP_ROWS) {
-        if (gameMap[newY][newX] != 'P') {
-            player->x = newX;
-            player->y = newY;
-            player->dir = newDir;
+    if (novo_x >= 0 && novo_x < COLUNAS && novo_y >= 0 && novo_y < LINHAS) {
+        if (mapa[novo_y][novo_x] != 'P') {
+            jogador->x = novo_x;
+            jogador->y = novo_y;
+            jogador->direcao = nova_direcao;
         }
     }
 }
 
-void MoveMonsters(Monster monsters[], int numMonsters) {
-    for (int i = 0; i < numMonsters; i++) {
-        if (!monsters[i].alive) continue;
-        
+void Movimento_monstros(Monstro_t monstros[], int numero_monstros) {
+    for (int i = 0; i < numero_monstros; i++) {
+        if (!monstros[i].vivo) continue;
+
         // Atualizar temporizador de movimento
-        monsters[i].moveTimer -= GetFrameTime();
-        if (monsters[i].moveTimer > 0) continue;
-        
+        monstros[i].cooldown_mover -= GetFrameTime();
+        if (monstros[i].cooldown_mover > 0) continue;
+
         // Resetar temporizador (0.5-1.5 segundos)
-        monsters[i].moveTimer = 0.5f + (float)rand() / (float)RAND_MAX;
-        
+        monstros[i].cooldown_mover = 0.5f + (float)rand() / (float)RAND_MAX;
+
         // Escolher direção aleatória
-        int direction = rand() % 4;
-        int newX = monsters[i].x;
-        int newY = monsters[i].y;
-        
-        switch (direction) {
-            case 0: newY--; break; // Norte
-            case 1: newY++; break; // Sul
-            case 2: newX++; break; // Leste
-            case 3: newX--; break; // Oeste
+        int direcao = rand() % 4;
+        int novo_x = monstros[i].x;
+        int novo_y = monstros[i].y;
+
+        switch (direcao) {
+            case 0: novo_y--; break; // Norte
+            case 1: novo_y++; break; // Sul
+            case 2: novo_x++; break; // Leste
+            case 3: novo_x--; break; // Oeste
         }
-        
+
         // Verificar limites do mapa e colisão com paredes
-        if (newX >= 0 && newX < MAP_COLS && newY >= 0 && newY < MAP_ROWS) {
-            if (gameMap[newY][newX] != 'P') {
-                monsters[i].x = newX;
-                monsters[i].y = newY;
-                monsters[i].dir = direction;
+        if (novo_x >= 0 && novo_x < COLUNAS && novo_y >= 0 && novo_y < LINHAS) {
+            if (mapa[novo_y][novo_x] != 'P') {
+                monstros[i].x = novo_x;
+                monstros[i].y = novo_y;
+                monstros[i].direcao = direcao;
             }
         }
     }
 }
 
-void CheckCollisions(GameState *state, Player *player, 
-                     Monster monsters[], int numMonsters, 
-                     ExtraLife extraLives[], int numExtraLives, 
-                     Sword *sword) {
+void Checar_colisoes(Estado_jogo_t *estado, Jogador_t *jogador,
+                     Monstro_t monstros[], int numero_monstros,
+                     Vida_Extra_t vidas_extra[], int numero_vidas_extra,
+                     Espada_t *espada) {
     // Verificar colisão com monstros
-    for (int i = 0; i < numMonsters; i++) {
-        if (monsters[i].alive && monsters[i].x == player->x && monsters[i].y == player->y) {
-            player->lives--;
-            if (player->lives <= 0) {
-                *state = GAMEOVER;
+    for (int i = 0; i < numero_monstros; i++) {
+        if (monstros[i].vivo && monstros[i].x == jogador->x && monstros[i].y == jogador->y) {
+            jogador->vidas--;
+            if (jogador->vidas <= 0) {
+                *estado = DERROTA;
             }
             // Reposicionar monstro após contato
-            monsters[i].x = rand() % MAP_COLS;
-            monsters[i].y = rand() % MAP_ROWS;
+            monstros[i].x = rand() % COLUNAS;
+            monstros[i].y = rand() % LINHAS;
         }
     }
-    
+
     // Verificar colisão com espada
-    if (!sword->collected && !player->hasSword && 
-        sword->x == player->x && sword->y == player->y) {
-        player->hasSword = true;
-        sword->collected = true;
+    if (!espada->coletado && !jogador->tem_espada &&
+        espada->x == jogador->x && espada->y == jogador->y) {
+        jogador->tem_espada = true;
+        espada->coletado = true;
     }
-    
+
     // Verificar colisão com vidas extras
-    for (int i = 0; i < numExtraLives; i++) {
-        if (!extraLives[i].collected && 
-            extraLives[i].x == player->x && extraLives[i].y == player->y) {
-            player->lives++;
-            extraLives[i].collected = true;
+    for (int i = 0; i < numero_vidas_extra; i++) {
+        if (!vidas_extra[i].coletado &&
+            vidas_extra[i].x == jogador->x && vidas_extra[i].y == jogador->y) {
+            jogador->vidas++;
+            vidas_extra[i].coletado = true;
         }
     }
 }
 
-void UseSword(Player *player, Monster monsters[], int numMonsters) {
-    int startX = player->x;
-    int startY = player->y;
-    int endX = startX;
-    int endY = startY;
-    
+void Usar_espada(Jogador_t *jogador, Monstro_t monstros[], int numero_monstros) {
+    int x_inicial = jogador->x;
+    int y_inicial = jogador->y;
+    int x_final = x_inicial;
+    int y_final = y_inicial;
+
     // Determinar direção da espada
-    switch (player->dir) {
-        case NORTH: endY -= SWORD_RANGE; break;
-        case SOUTH: endY += SWORD_RANGE; break;
-        case EAST: endX += SWORD_RANGE; break;
-        case WEST: endX -= SWORD_RANGE; break;
+    switch (jogador->direcao) {
+        case NORTE: y_final -= ALCANCE_ESPADA; break;
+        case SUL:   y_final += ALCANCE_ESPADA; break;
+        case LESTE: x_final += ALCANCE_ESPADA; break;
+        case OESTE: x_final -= ALCANCE_ESPADA; break;
         default: break;
     }
-    
+
     // Garantir que as coordenadas estão dentro dos limites
-    int minX = (startX < endX) ? startX : endX;
-    int maxX = (startX > endX) ? startX : endX;
-    int minY = (startY < endY) ? startY : endY;
-    int maxY = (startY > endY) ? startY : endY;
-    
+    int min_x = (x_inicial < x_final) ? x_inicial : x_final;
+    int max_x = (x_inicial > x_final) ? x_inicial : x_final;
+    int min_y = (y_inicial < y_final) ? y_inicial : y_final;
+    int max_y = (y_inicial > y_final) ? y_inicial : y_final;
+
     // Verificar monstros na área de ataque
-    for (int i = 0; i < numMonsters; i++) {
-        if (monsters[i].alive && 
-            monsters[i].x >= minX && monsters[i].x <= maxX &&
-            monsters[i].y >= minY && monsters[i].y <= maxY) {
-            
+    for (int i = 0; i < numero_monstros; i++) {
+        if (monstros[i].vivo &&
+            monstros[i].x >= min_x && monstros[i].x <= max_x &&
+            monstros[i].y >= min_y && monstros[i].y <= max_y) {
+
             // Verificar se está na linha de ataque
-            bool inLine = false;
-            switch (player->dir) {
-                case NORTH:
-                case SOUTH:
-                    inLine = (monsters[i].x == startX);
+            bool linha_ataque = false;
+            switch (jogador->direcao) {
+                case NORTE:
+                case SUL:
+                    linha_ataque = (monstros[i].x == x_inicial);
                     break;
-                case EAST:
-                case WEST:
-                    inLine = (monsters[i].y == startY);
+                case LESTE:
+                case OESTE:
+                    linha_ataque = (monstros[i].y == y_inicial);
                     break;
                 default:
                     break;
             }
-            
-            if (inLine) {
-                player->score += monsters[i].points;
-                monsters[i].alive = false;
+
+            if (linha_ataque) {
+                jogador->score += monstros[i].pontos;
+                monstros[i].vivo = false;
             }
         }
     }
 }
 
-void DrawGame(Player *player, Monster monsters[], int numMonsters, 
-              ExtraLife extraLives[], int numExtraLives, 
-              Sword *sword, int currentLevel) {
+void Desenha_jogo(Jogador_t *jogador, Monstro_t monstros[], int numero_monstros,
+              Vida_Extra_t vidas_extra[], int numero_vidas_extra,
+              Espada_t *espada, int level_atual) {
     // Desenhar fundo
-    for (int i = 0; i < MAP_ROWS; i++) {
-        for (int j = 0; j < MAP_COLS; j++) {
+    for (int i = 0; i < LINHAS; i++) {
+        for (int j = 0; j < COLUNAS; j++) {
             // Desenhar chão
-            DrawTexture(groundTexture, j * BLOCK_SIZE, i * BLOCK_SIZE + STATUS_BAR_HEIGHT, WHITE);
-            
+            DrawTexture(textura_chao, j * CELULA, i * CELULA + BARRA_STATUS, WHITE);
+
             // Desenhar paredes
-            if (gameMap[i][j] == 'P') {
-                DrawTexture(wallTexture, j * BLOCK_SIZE, i * BLOCK_SIZE + STATUS_BAR_HEIGHT, WHITE);
+            if (mapa[i][j] == 'P') {
+                DrawTexture(textura_parede, j * CELULA, i * CELULA + BARRA_STATUS, WHITE);
             }
         }
     }
-    
+
     // Desenhar espada
-    if (!sword->collected) {
-        DrawTexture(swordTexture, sword->x * BLOCK_SIZE, sword->y * BLOCK_SIZE + STATUS_BAR_HEIGHT, WHITE);
+    if (!espada->coletado) {
+        DrawTexture(textura_espada, espada->x * CELULA, espada->y * CELULA + BARRA_STATUS, WHITE);
     }
-    
+
     // Desenhar vidas extras
-    for (int i = 0; i < numExtraLives; i++) {
-        if (!extraLives[i].collected) {
-            DrawTexture(heartTexture, extraLives[i].x * BLOCK_SIZE, 
-                        extraLives[i].y * BLOCK_SIZE + STATUS_BAR_HEIGHT, WHITE);
+    for (int i = 0; i < numero_vidas_extra; i++) {
+        if (!vidas_extra[i].coletado) {
+            DrawTexture(textura_vida, vidas_extra[i].x * CELULA,
+                        vidas_extra[i].y * CELULA + BARRA_STATUS, WHITE);
         }
     }
-    
+
     // Desenhar monstros
-    for (int i = 0; i < numMonsters; i++) {
-        if (monsters[i].alive) {
-            DrawTexture(monsterTexture, monsters[i].x * BLOCK_SIZE, 
-                        monsters[i].y * BLOCK_SIZE + STATUS_BAR_HEIGHT, WHITE);
+    for (int i = 0; i < numero_monstros; i++) {
+        if (monstros[i].vivo) {
+            DrawTexture(textura_monstros[monstros[i].direcao],
+                       monstros[i].x * CELULA,
+                       monstros[i].y * CELULA + BARRA_STATUS,
+                       WHITE);
         }
     }
-    
+
     // Desenhar jogador
-    DrawTexture(playerTextures[player->dir], player->x * BLOCK_SIZE, 
-                player->y * BLOCK_SIZE + STATUS_BAR_HEIGHT, WHITE);
-    
+    DrawTexture(textura_jogador[jogador->direcao], jogador->x * CELULA,
+                jogador->y * CELULA + BARRA_STATUS, WHITE);
+
     // Desenhar área de ataque da espada
-    if (player->swordActive) {
-        int startX = player->x;
-        int startY = player->y;
-        int endX = startX;
-        int endY = startY;
-        
-        switch (player->dir) {
-            case NORTH: endY -= SWORD_RANGE; break;
-            case SOUTH: endY += SWORD_RANGE; break;
-            case EAST: endX += SWORD_RANGE; break;
-            case WEST: endX -= SWORD_RANGE; break;
+    if (jogador->ativa_espada) {
+        int x_inicial = jogador->x;
+        int y_inicial = jogador->y;
+        int x_final = x_inicial;
+        int y_final = y_inicial;
+
+        switch (jogador->direcao) {
+            case NORTE: y_final -= ALCANCE_ESPADA; break;
+            case SUL: y_final += ALCANCE_ESPADA; break;
+            case LESTE: x_final += ALCANCE_ESPADA; break;
+            case OESTE: x_final -= ALCANCE_ESPADA; break;
             default: break;
         }
-        
+
         // Garantir que as coordenadas estão dentro dos limites
-        if (endY < 0) endY = 0;
-        if (endY >= MAP_ROWS) endY = MAP_ROWS - 1;
-        if (endX < 0) endX = 0;
-        if (endX >= MAP_COLS) endX = MAP_COLS - 1;
-        
+        if (y_final < 0) y_final = 0;
+        if (y_final >= LINHAS) y_final = LINHAS - 1;
+        if (x_final < 0) x_final = 0;
+        if (x_final >= COLUNAS) x_final = COLUNAS - 1;
+
         // Desenhar área de ataque
-        for (int y = (startY < endY) ? startY : endY; y <= ((startY > endY) ? startY : endY); y++) {
-            for (int x = (startX < endX) ? startX : endX; x <= ((startX > endX) ? startX : endX); x++) {
-                if ((x == startX && y >= startY && y <= endY) || 
-                    (y == startY && x >= startX && x <= endX)) {
-                    DrawRectangle(x * BLOCK_SIZE, y * BLOCK_SIZE + STATUS_BAR_HEIGHT, 
-                                 BLOCK_SIZE, BLOCK_SIZE, 
+        for (int y = (y_inicial < y_final) ? y_inicial : y_final; y <= ((y_inicial > y_final) ? y_inicial : y_final); y++) {
+            for (int x = (x_inicial < x_final) ? x_inicial : x_final; x <= ((x_inicial > x_final) ? x_inicial : x_final); x++) {
+                if ((x == x_inicial && y >= y_inicial && y <= y_final) ||
+                    (y == y_inicial && x >= x_inicial && x <= x_final)) {
+                    DrawRectangle(x * CELULA, y * CELULA + BARRA_STATUS,
+                                 CELULA, CELULA,
                                  (Color){255, 0, 0, 128}); // Vermelho semi-transparente
                 }
             }
         }
     }
-    
+
     // Desenhar barra de status
-    DrawStatusBar(player, currentLevel);
+    Desenha_barra_status(jogador, level_atual);
 }
 
-void DrawStatusBar(Player *player, int currentLevel) {
+void Desenha_barra_status(Jogador_t *jogador, int level_atual) {
     // Fundo da barra de status
-    DrawRectangle(0, 0, SCREEN_WIDTH, STATUS_BAR_HEIGHT, DARKGRAY);
-    
+    DrawRectangle(0, 0, LARGURA_TELA, BARRA_STATUS, DARKGRAY);
+
     // Textos
-    DrawTextEx(gameFont, TextFormat("Pontos: %d", player->score), 
+    DrawTextEx(fonte_jogo, TextFormat("Pontos: %d", jogador->score),
                (Vector2){20, 20}, 20, 2, YELLOW);
-    
-    DrawTextEx(gameFont, TextFormat("Nivel: %d", currentLevel), 
-               (Vector2){SCREEN_WIDTH/2 - 50, 20}, 20, 2, WHITE);
-    
+
+    DrawTextEx(fonte_jogo, TextFormat("Nivel: %d", level_atual),
+               (Vector2){LARGURA_TELA/2 - 50, 20}, 20, 2, WHITE);
+
     // Vidas (representadas por corações)
-    for (int i = 0; i < player->lives; i++) {
-        DrawTexture(heartTexture, SCREEN_WIDTH - 100 - i * 40, 10, WHITE);
+    for (int i = 0; i < jogador->vidas; i++) {
+        DrawTexture(textura_vida, LARGURA_TELA - 100 - i * 40, 10, WHITE);
     }
-    
+
     // Indicador de espada
-    if (player->hasSword) {
-        DrawTextEx(gameFont, "ESPADA", (Vector2){SCREEN_WIDTH - 200, 20}, 20, 2, BLUE);
+    if (jogador->tem_espada) {
+        DrawTextEx(fonte_jogo, "ESPADA", (Vector2){LARGURA_TELA - 200, 20}, 20, 2, BLUE);
     }
 }
 
 // Implementações das funções de menu (simplificadas)
-void DrawMenu(GameState *state, int *menuSelection) {
+void Desenha_menu(Estado_jogo_t *estado, int *selecao_menu) {
+    (void)estado;
     // Desenhar fundo do menu
-    DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (Color){0, 0, 0, 200});
-    
+    DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, (Color){0, 0, 0, 200});
+
     // Título
-    DrawTextEx(gameFont, "ZELDA INF", (Vector2){SCREEN_WIDTH/2 - 100, 100}, 48, 2, GOLD);
-    
+    DrawTextEx(fonte_jogo, "ZELDA INF", (Vector2){LARGURA_TELA/2 - 100, 100}, 48, 2, GOLD);
+
     // Opções
-    const char *options[] = {"Novo Jogo", "Scoreboard", "Sair"};
+    const char *opcoes[] = {"Novo Jogo", "Scoreboard", "Sair"};
     for (int i = 0; i < 3; i++) {
-        Color color = (i == *menuSelection) ? YELLOW : WHITE;
-        DrawTextEx(gameFont, options[i], (Vector2){SCREEN_WIDTH/2 - 80, 200 + i * 60}, 30, 2, color);
+        Color cor = (i == *selecao_menu) ? YELLOW : WHITE;
+        DrawTextEx(fonte_jogo, opcoes[i], (Vector2){LARGURA_TELA/2 - 80, 200 + i * 60}, 30, 2, cor);
     }
 }
 
-void DrawPauseMenu(int *pauseSelection) {
+void Desenha_menu_pausa(int *selecao_pause) {
     // Sobrepor semi-transparente
-    DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (Color){0, 0, 0, 180});
-    
+    DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, (Color){0, 0, 0, 180});
+
     // Título
-    DrawTextEx(gameFont, "JOGO PAUSADO", (Vector2){SCREEN_WIDTH/2 - 120, 150}, 36, 2, WHITE);
-    
+    DrawTextEx(fonte_jogo, "JOGO PAUSADO", (Vector2){LARGURA_TELA/2 - 120, 150}, 36, 2, WHITE);
+
     // Opções
-    const char *options[] = {"Continuar", "Voltar ao Menu", "Sair"};
+    const char *opcoes[] = {"Continuar", "Voltar ao Menu", "Sair"};
     for (int i = 0; i < 3; i++) {
-        Color color = (i == *pauseSelection) ? YELLOW : LIGHTGRAY;
-        DrawTextEx(gameFont, options[i], (Vector2){SCREEN_WIDTH/2 - 80, 250 + i * 60}, 30, 2, color);
+        Color cor = (i == *selecao_pause) ? YELLOW : LIGHTGRAY;
+        DrawTextEx(fonte_jogo, opcoes[i], (Vector2){LARGURA_TELA/2 - 80, 250 + i * 60}, 30, 2, cor);
     }
 }
 
-// Funções auxiliares para carregamento de recursos
-void LoadTextures() {
-    // Texturas de exemplo (substituir por arquivos reais)
-    Image img = GenImageColor(BLOCK_SIZE, BLOCK_SIZE, BLUE);
-    playerTextures[NORTH] = LoadTextureFromImage(img);
-    
-    img = GenImageColor(BLOCK_SIZE, BLOCK_SIZE, GREEN);
-    playerTextures[SOUTH] = LoadTextureFromImage(img);
-    
-    img = GenImageColor(BLOCK_SIZE, BLOCK_SIZE, RED);
-    playerTextures[EAST] = LoadTextureFromImage(img);
-    
-    img = GenImageColor(BLOCK_SIZE, BLOCK_SIZE, ORANGE);
-    playerTextures[WEST] = LoadTextureFromImage(img);
-    
-    img = GenImageColor(BLOCK_SIZE, BLOCK_SIZE, PURPLE);
-    monsterTexture = LoadTextureFromImage(img);
-    
-    img = GenImageColor(BLOCK_SIZE, BLOCK_SIZE, GRAY);
-    wallTexture = LoadTextureFromImage(img);
-    
-    img = GenImageColor(BLOCK_SIZE, BLOCK_SIZE, YELLOW);
-    swordTexture = LoadTextureFromImage(img);
-    
-    img = GenImageColor(BLOCK_SIZE, BLOCK_SIZE, PINK);
-    heartTexture = LoadTextureFromImage(img);
-    
-    img = GenImageColor(BLOCK_SIZE, BLOCK_SIZE, (Color){50, 150, 50, 255});
-    groundTexture = LoadTextureFromImage(img);
-    
-    UnloadImage(img);
+void Carrega_texturas() {
+    // Carregar texturas do jogador para cada direção
+    textura_jogador[NORTE] = LoadTexture("jogador-norte.png");
+    textura_jogador[SUL] = LoadTexture("jogador-sul.png");
+    textura_jogador[LESTE] = LoadTexture("jogador-leste.png");
+    textura_jogador[OESTE] = LoadTexture("jogador-oeste.png");
+
+   // Carregar texturas dos monstros para cada direção
+    textura_monstros[NORTE] = LoadTexture("monstro-norte.png");
+    textura_monstros[SUL] = LoadTexture("monstro-sul.png");
+    textura_monstros[LESTE] = LoadTexture("monstro-leste.png");
+    textura_monstros[OESTE] = LoadTexture("monstro-oeste.png");
+
+    // Carregar texturas de outros elementos
+    textura_parede = LoadTexture("parede.png");
+    textura_espada = LoadTexture("espada.png");
+    textura_vida = LoadTexture("vida.png");
+    textura_chao = LoadTexture("chao_1200x800.png");
 }
 
-void UnloadTextures() {
+void Descarrega_texturas() {
     for (int i = 0; i < 4; i++) {
-        UnloadTexture(playerTextures[i]);
+    UnloadTexture(textura_jogador[i]);
     }
-    UnloadTexture(monsterTexture);
-    UnloadTexture(wallTexture);
-    UnloadTexture(swordTexture);
-    UnloadTexture(heartTexture);
-    UnloadTexture(groundTexture);
-    UnloadFont(gameFont);
+    for (int i = 0; i < 4; i++) {
+        UnloadTexture(textura_monstros[i]);
+    }
+    UnloadTexture(textura_parede);
+    UnloadTexture(textura_espada);
+    UnloadTexture(textura_vida);
+    UnloadTexture(textura_chao);
+    UnloadFont(fonte_jogo);
 }
 
-bool LoadRanking(TIPO_SCORE ranking[]) {
+bool Carrega_ranking(Score_t ranking[]) {
     FILE *file = fopen("ranking.bin", "rb");
-    if (!file) return false;
-    
-    fread(ranking, sizeof(TIPO_SCORE), 5, file);
+    if (!file) {return false;};
+
+    fread(ranking, sizeof(Score_t), 5, file);
     fclose(file);
     return true;
 }
 
-void SaveRanking(TIPO_SCORE ranking[]) {
+void Salva_ranking(Score_t ranking[]) {
     FILE *file = fopen("ranking.bin", "wb");
-    if (!file) return;
-    
-    fwrite(ranking, sizeof(TIPO_SCORE), 5, file);
+    if (!file) {return;};
+
+    fwrite(ranking, sizeof(Score_t), 5, file);
     fclose(file);
 }
 
-void ResetLevel(int level, Player *player, Monster monsters[], int *numMonsters, 
-               ExtraLife extraLives[], int *numExtraLives, Sword *sword) {
+void Reseta_nivel(int level, Jogador_t *jogador, Monstro_t monstros[], int *numero_monstros,
+               Vida_Extra_t vidas_extra[], int *numero_vidas_extra, Espada_t *espada) {
+
     // Manter pontuação e vidas do jogador
-    int score = player->score;
-    int lives = player->lives;
-    bool hasSword = player->hasSword;
-    
+    int score = jogador->score;
+    int vidas = jogador->vidas;
+    bool tem_espada = jogador->tem_espada;
+
     // Recarregar o nível
-    InitGame(&(GameState){0}, &level, player, monsters, numMonsters, 
-             extraLives, numExtraLives, sword);
-    
+    Comeca_jogo(&(Estado_jogo_t){0}, &level, jogador, monstros, numero_monstros,
+             vidas_extra, numero_vidas_extra, espada);
+
     // Restaurar estado do jogador
-    player->score = score;
-    player->lives = lives;
-    player->hasSword = hasSword;
+    jogador->score = score;
+    jogador->vidas = vidas;
+    jogador->tem_espada = tem_espada;
 }
 
 // Implementações restantes de menus (simplificadas)
-void DrawScoreboard(TIPO_SCORE ranking[]) {
-    DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (Color){30, 30, 50, 255});
-    DrawTextEx(gameFont, "TOP 5 PONTUACOES", (Vector2){SCREEN_WIDTH/2 - 150, 50}, 36, 2, GOLD);
-    
+void Desenha_scoreboard(Score_t ranking[]) {
+    DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, (Color){30, 30, 50, 255});
+    DrawTextEx(fonte_jogo, "TOP 5 PONTUACOES", (Vector2){LARGURA_TELA/2 - 150, 50}, 36, 2, GOLD);
+
     for (int i = 0; i < 5; i++) {
-        DrawTextEx(gameFont, TextFormat("%d. %s: %d", i+1, ranking[i].nome, ranking[i].score), 
-                  (Vector2){SCREEN_WIDTH/2 - 150, 150 + i * 60}, 30, 2, WHITE);
+        DrawTextEx(fonte_jogo, TextFormat("%d. %s: %d", i+1, ranking[i].nome, ranking[i].score),
+                  (Vector2){LARGURA_TELA/2 - 150, 150 + i * 60}, 30, 2, WHITE);
     }
-    
-    DrawTextEx(gameFont, "Pressione ENTER para voltar", 
-              (Vector2){SCREEN_WIDTH/2 - 180, SCREEN_HEIGHT - 50}, 20, 2, LIGHTGRAY);
+
+    DrawTextEx(fonte_jogo, "Pressione ENTER para voltar",
+              (Vector2){LARGURA_TELA/2 - 180, ALTURA_TELA - 50}, 20, 2, LIGHTGRAY);
 }
 
-void DrawGameOverMenu(int *gameOverSelection) {
-    DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (Color){50, 0, 0, 200});
-    DrawTextEx(gameFont, "GAME OVER", (Vector2){SCREEN_WIDTH/2 - 120, 150}, 48, 2, RED);
-    
-    const char *options[] = {"Carregar Jogo", "Reiniciar Jogo", "Voltar ao Menu"};
+void Desenha_menu_derrota(int *selecao_derrota) {
+    DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, (Color){50, 0, 0, 200});
+    DrawTextEx(fonte_jogo, "GAME OVER", (Vector2){LARGURA_TELA/2 - 120, 150}, 48, 2, RED);
+
+    const char *opcoes[] = {"Carregar Jogo", "Reiniciar Jogo", "Voltar ao Menu"};
     for (int i = 0; i < 3; i++) {
-        Color color = (i == *gameOverSelection) ? YELLOW : LIGHTGRAY;
-        DrawTextEx(gameFont, options[i], (Vector2){SCREEN_WIDTH/2 - 100, 250 + i * 60}, 30, 2, color);
+        Color cor = (i == *selecao_derrota) ? YELLOW : LIGHTGRAY;
+        DrawTextEx(fonte_jogo, opcoes[i], (Vector2){LARGURA_TELA/2 - 100, 250 + i * 60}, 30, 2, cor);
     }
 }
 
-void DrawVictoryScreen(int *victorySelection) {
-    DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (Color){0, 50, 0, 200});
-    DrawTextEx(gameFont, "VITORIA!", (Vector2){SCREEN_WIDTH/2 - 100, 150}, 48, 2, GREEN);
-    DrawTextEx(gameFont, "Parabens! Voce completou todos os niveis!", 
-              (Vector2){SCREEN_WIDTH/2 - 250, 220}, 24, 2, LIGHTGRAY);
-    
-    const char *options[] = {"Voltar ao Menu", "Sair"};
+void Desenha_menu_vitoria(int *selecao_vitoria) {
+    DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, (Color){0, 50, 0, 200});
+    DrawTextEx(fonte_jogo, "VITORIA!", (Vector2){LARGURA_TELA/2 - 100, 150}, 48, 2, GREEN);
+    DrawTextEx(fonte_jogo, "Parabens! Voce completou todos os niveis!",
+              (Vector2){LARGURA_TELA/2 - 250, 220}, 24, 2, LIGHTGRAY);
+
+    const char *opcoes[] = {"Voltar ao Menu", "Sair"};
     for (int i = 0; i < 2; i++) {
-        Color color = (i == *victorySelection) ? YELLOW : LIGHTGRAY;
-        DrawTextEx(gameFont, options[i], (Vector2){SCREEN_WIDTH/2 - 80, 300 + i * 60}, 30, 2, color);
+        Color cor = (i == *selecao_vitoria) ? YELLOW : LIGHTGRAY;
+        DrawTextEx(fonte_jogo, opcoes[i], (Vector2){LARGURA_TELA/2 - 80, 300 + i * 60}, 30, 2, cor);
     }
 }
