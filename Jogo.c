@@ -65,6 +65,7 @@ Texture2D textura_parede;
 Texture2D textura_espada;
 Texture2D textura_vida;
 Texture2D textura_chao;
+Texture2D textura_menu;
 Font fonte_jogo;
 
 // Protótipos de funções
@@ -399,16 +400,16 @@ void Carrega_mapa(int level) {
     "PPPPPPPPPPPPPPPPPPPPPPPP",  // 24 'P'
     "P......................P",
     "P.......E..............P",
-    "P......................P",
+    "P.........J............P",
     "P......................P",
     "P......................P",
     "P..............M.......P",
+    "P......PP..............P",
+    "P.......PP.............P",
     "P......................P",
     "P......................P",
     "P......................P",
-    "P......................P",
-    "P......................P",
-    "P......................P",
+    "P.............M........P",
     "P......................P",
     "P......................P",
     "PPPPPPPPPPPPPPPPPPPPPPPP"
@@ -425,21 +426,22 @@ void Carrega_mapa(int level) {
 void Carrega_texturas() {
     // Carregar texturas do jogador para cada direção
     textura_jogador[NORTE] = LoadTexture("jogador-norte.png");
-    textura_jogador[SUL] = LoadTexture("jogador-sul.png");
+    textura_jogador[SUL]   = LoadTexture("jogador-sul.png");
     textura_jogador[LESTE] = LoadTexture("jogador-leste.png");
     textura_jogador[OESTE] = LoadTexture("jogador-oeste.png");
 
    // Carregar texturas dos monstros para cada direção
     textura_monstros[NORTE] = LoadTexture("monstro-norte.png");
-    textura_monstros[SUL] = LoadTexture("monstro-sul.png");
+    textura_monstros[SUL]   = LoadTexture("monstro-sul.png");
     textura_monstros[LESTE] = LoadTexture("monstro-leste.png");
     textura_monstros[OESTE] = LoadTexture("monstro-oeste.png");
 
     // Carregar texturas de outros elementos
+    textura_menu   = LoadTexture("menu.png");
     textura_parede = LoadTexture("parede.png");
     textura_espada = LoadTexture("espada.png");
-    textura_vida = LoadTexture("vida.png");
-    textura_chao = LoadTexture("chao.png");
+    textura_vida   = LoadTexture("vida.png");
+    textura_chao   = LoadTexture("chao.png");
 }
 
 void Comeca_jogo(Estado_jogo_t *estado, int *level_atual, Jogador_t *jogador,
@@ -600,36 +602,45 @@ void Desenha_jogo(Jogador_t *jogador, Monstro_t monstros[], int numero_monstros,
 
     // Desenhar área de ataque da espada
     if (jogador->ativa_espada) {
-        int x_inicial = jogador->x;
-        int y_inicial = jogador->y;
-        int x_final = x_inicial;
-        int y_final = y_inicial;
+    int x0 = jogador->x;
+    int y0 = jogador->y;
+    int x1 = x0;
+    int y1 = y0;
 
-        switch (jogador->direcao) {
-            case NORTE: y_final -= ALCANCE_ESPADA; break;
-            case SUL: y_final += ALCANCE_ESPADA; break;
-            case LESTE: x_final += ALCANCE_ESPADA; break;
-            case OESTE: x_final -= ALCANCE_ESPADA; break;
-            default: break;
-        }
+    // 1) Define ponto final conforme a direção
+    switch (jogador->direcao) {
+        case NORTE: y1 -= ALCANCE_ESPADA; break;
+        case SUL:   y1 += ALCANCE_ESPADA; break;
+        case LESTE: x1 += ALCANCE_ESPADA; break;
+        case OESTE: x1 -= ALCANCE_ESPADA; break;
+    }
 
-        // Garantir que as coordenadas estão dentro dos limites
-        if (y_final < 0) y_final = 0;
-        if (y_final >= LINHAS) y_final = LINHAS - 1;
-        if (x_final < 0) x_final = 0;
-        if (x_final >= COLUNAS) x_final = COLUNAS - 1;
+    // 2) Limita dentro do mapa
+    if (x1 < 0) x1 = 0;
+    if (x1 >= COLUNAS) x1 = COLUNAS - 1;
+    if (y1 < 0) y1 = 0;
+    if (y1 >= LINHAS) y1 = LINHAS - 1;
 
-        // Desenhar área de ataque
-        for (int y = (y_inicial < y_final) ? y_inicial : y_final; y <= ((y_inicial > y_final) ? y_inicial : y_final); y++) {
-            for (int x = (x_inicial < x_final) ? x_inicial : x_final; x <= ((x_inicial > x_final) ? x_inicial : x_final); x++) {
-                if ((x == x_inicial && y >= y_inicial && y <= y_final) ||
-                    (y == y_inicial && x >= x_inicial && x <= x_final)) {
-                    DrawRectangle(x * CELULA, y * CELULA + BARRA_STATUS,
-                                 CELULA, CELULA,
-                                 (Color){255, 0, 0, 128}); // Vermelho semi-transparente
-                }
+    // 3) Calcula intervalos
+    int min_x = (x0 < x1) ? x0 : x1;
+    int max_x = (x0 > x1) ? x0 : x1;
+    int min_y = (y0 < y1) ? y0 : y1;
+    int max_y = (y0 > y1) ? y0 : y1;
+
+    // 4) Desenha a “linha” de ataque: ou na coluna do jogador (vertical)
+    //    ou na linha do jogador (horizontal)
+    for (int y = min_y; y <= max_y; y++) {
+        for (int x = min_x; x <= max_x; x++) {
+            if (x == x0 || y == y0) {
+                DrawRectangle(
+                  x * CELULA,
+                  y * CELULA + BARRA_STATUS,
+                  CELULA, CELULA,
+                  (Color){255, 0, 0, 128}
+                );
             }
         }
+    }
     }
 
     // Desenhar barra de status
@@ -664,8 +675,14 @@ void Desenha_barra_status(Jogador_t *jogador, int level_atual) {
 // Implementações das funções de menu (simplificadas)
 void Desenha_menu(Estado_jogo_t *estado, int *selecao_menu) {
     (void)estado;
-    // Desenhar fundo do menu
-    DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, (Color){0, 0, 0, 200});
+    Rectangle origem = { 0.0f, 0.0f, (float)textura_menu.width, (float)textura_menu.height };
+    Rectangle destino = { 0.0f, 0.0f, 1200, 860 }; // tamanho desejado
+    Vector2 origem_desenho = { 0.0f, 0.0f };
+
+    DrawTexturePro(textura_menu, origem, destino, origem_desenho, 0.0f, WHITE);
+
+    // Fundo translúcido por cima para contraste
+    DrawRectangle(0, 0, 1200, 860, (Color){0, 0, 0, 150});
 
     // Título
     DrawTextEx(fonte_jogo, "ZELDA INF", (Vector2){LARGURA_TELA/2 - 100, 100}, 48, 2, GOLD);
