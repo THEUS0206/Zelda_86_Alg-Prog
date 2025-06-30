@@ -19,21 +19,24 @@
 #define MAX_NIVEIS 99
 #define ALCANCE_ESPADA 3
 #define MAX_RANKING 5
+#define MAX_NOME 30
 
 // Estruturas de dados
 typedef enum { NORTE, SUL, LESTE, OESTE } Direcao_t;
 
-typedef struct {
+typedef struct
+{
     int x, y;
     Direcao_t direcao;
-    int score;
     int vidas;
+    int score;
     bool tem_espada;
     bool ativa_espada;
     float cooldown_espada;
 } Jogador_t;
 
-typedef struct {
+typedef struct
+{
     int x, y;
     Direcao_t direcao;
     int pontos;
@@ -41,24 +44,27 @@ typedef struct {
     float cooldown_mover;
 } Monstro_t;
 
-typedef struct {
+typedef struct
+{
     int x, y;
     bool coletado;
 } Vida_Extra_t;
 
-typedef struct {
+typedef struct
+{
     int x, y;
     bool coletado;
 } Espada_t;
 
-typedef struct {
-    char nome[20];
+typedef struct
+{
+    char nome[MAX_NOME];
     int score;
-} Score_t;
+} TIPO_SCORE;
 
 typedef enum { MENU, JOGANDO, PAUSA, DERROTA, VITORIA, SCOREBOARD } Estado_jogo_t;
 
-// Vari√°veis globais permitidas
+// Vari·veis globais permitidas
 char mapa[LINHAS][COLUNAS];
 Texture2D textura_jogador[4];  // N, S, L, O
 Texture2D textura_monstros[4]; // N, S, L, O
@@ -69,39 +75,39 @@ Texture2D textura_chao;
 Texture2D textura_menu;
 Font fonte_jogo;
 
-// Prot√≥tipos de fun√ß√µes
+// ProtÛtipos de funÁıes
 void Atualiza_jogo(Estado_jogo_t *Estado, int *nivel_atual, Jogador_t *jogador,
-                Monstro_t monstros[], int *numero_monstros,
-                Vida_Extra_t vidas_extra[], int *numero_vidas_extra,
-                Espada_t *espada);
+                   Monstro_t monstros[], int *numero_monstros,
+                   Vida_Extra_t vidas_extra[], int *numero_vidas_extra,
+                   Espada_t *espada);
 
-void Atualiza_ranking(int score, Score_t ranking[]);
+void Atualiza_ranking(TIPO_SCORE nome_jogador, TIPO_SCORE ranking[]);
 
 bool Carrega_mapa(int level);
 
 void Comeca_jogo(Estado_jogo_t *estado, int *niveis_atual, Jogador_t *jogador,
-              Monstro_t monstros[], int *numero_monstros,
-              Vida_Extra_t vidas_extra[], int *numero_vidas_extra,
-              Espada_t *espada);
+                 Monstro_t monstros[], int *numero_monstros,
+                 Vida_Extra_t vidas_extra[], int *numero_vidas_extra,
+                 Espada_t *espada);
 
 void Checar_colisoes(Estado_jogo_t *estado, Jogador_t *jogador,
                      Monstro_t monstros[], int numero_monstros,
                      Vida_Extra_t vidas_extra[], int numero_vidas_extra,
                      Espada_t *espada);
 
-bool Carrega_ranking(Score_t ranking[]);
+bool Carrega_ranking(TIPO_SCORE ranking[]);
 
 void Carrega_texturas();
 
 void Descarrega_texturas();
 
 void Desenha_jogo( Jogador_t *jogador, Monstro_t monstros[], int numero_monstros,
-              Vida_Extra_t vidas_extra[], int numero_vidas_extra,
-              Espada_t *espada, int nivel_atual);
+                   Vida_Extra_t vidas_extra[], int numero_vidas_extra,
+                   Espada_t *espada, int nivel_atual);
 
-void Desenha_menu(Estado_jogo_t *estado, int *selecao_menu);
+void Desenha_menu(int *selecao_menu);
 
-void Desenha_scoreboard(Score_t ranking[]);
+void Desenha_scoreboard(TIPO_SCORE ranking[]);
 
 void Desenha_menu_pausa(int *selecao_pause);
 
@@ -115,29 +121,31 @@ void Movimento_jogador(Jogador_t *jogador, int tecla);
 
 void Movimento_monstros(Monstro_t monstros[], int numero_monstros);
 
+void Nome_do_jogador(char nome[]);
+
 bool Posicao_valida(int x, int y, char mapa[LINHAS][COLUNAS]);
 
 void Reseta_nivel(int level, Jogador_t *jogador, Monstro_t monstros[], int *numero_monstros,
-                Vida_Extra_t vidas_extra[], int *numero_vidas_extra, Espada_t *espada);
+                  Vida_Extra_t vidas_extra[], int *numero_vidas_extra, Espada_t *espada);
 
-void Salva_ranking(Score_t ranking[]);
+void Salva_ranking(TIPO_SCORE ranking[]);
 
 void Teleportar_entidade(int *px, int *py, char mapa[LINHAS][COLUNAS]);
 
 void Usar_espada(Jogador_t *jogador, Monstro_t monstros[], int numero_monstros);
 
 
-int main(void) {
-    // Inicializa√ß√£o da janela
+int main(void)
+{
+    // InicializaÁ„o da janela
     InitWindow(LARGURA_TELA, ALTURA_TELA, "Zelda INF");
-    InitAudioDevice();
     SetTargetFPS(60);
 
     // Carregar recursos
     Carrega_texturas();
-    fonte_jogo = LoadFont("alagard.png");
+    fonte_jogo = LoadFont("conteudo/fonte/alagard.png");
 
-    // Vari√°veis de estado do jogo
+    // Vari·veis de estado do jogo
     Estado_jogo_t estado = MENU;
     int level_atual = 1;
     int selecao_menu = 0;
@@ -150,186 +158,259 @@ int main(void) {
     Monstro_t monstros[MAX_MONSTROS];
     Vida_Extra_t vidas_extra[MAX_VIDA_EXTRA];
     Espada_t espada;
-    int numero_monstros = 0;
-    int numero_vidas_extra = 0;
+    int numero_monstros = 0, numero_vidas_extra = 0;
 
     // Ranking
-    Score_t ranking[5];
-    if (!Carrega_ranking(ranking)) {
-        // Inicializar ranking padr√£o se arquivo n√£o existir
-        for (int i = 0; i < 5; i++) {
-            sprintf(ranking[i].nome, "Jogador %d", i+1);
+    TIPO_SCORE ranking[MAX_RANKING];
+    TIPO_SCORE entrada_score;
+
+    if (!Carrega_ranking(ranking))
+    {
+        // Inicializar ranking padr„o se arquivo n„o existir
+        for (int i = 0; i < MAX_RANKING; i++)
+        {
+            snprintf(ranking[i].nome, MAX_NOME, "Jogador %d", i+1);
             ranking[i].score = 1000 - i * 200;
         }
     }
+    bool ranking_atualizado = false;
 
     // Loop principal do jogo
-    while (!WindowShouldClose()) {
-        switch (estado) {
-            case MENU:
-                // Navega√ß√£o no menu
-                if (IsKeyPressed(KEY_DOWN)) selecao_menu = (selecao_menu + 1) % 3;
-                if (IsKeyPressed(KEY_UP)) selecao_menu = (selecao_menu + 2) % 3;
+    while (!WindowShouldClose())
+    {
+        switch (estado)
+        {
+        case MENU:
+            // NavegaÁ„o no menu
+            if (IsKeyPressed(KEY_DOWN))
+            {
+                selecao_menu = (selecao_menu + 1) % 3;
+            }
+            if (IsKeyPressed(KEY_UP))
+            {
+                selecao_menu = (selecao_menu + 2) % 3;
+            }
 
-                if (IsKeyPressed(KEY_ENTER)) {
-                    switch (selecao_menu) {
-                        case 0: // Novo jogo
-                            level_atual = 1;
-                            Comeca_jogo(&estado, &level_atual, &jogador, monstros, &numero_monstros,
-                                     vidas_extra, &numero_vidas_extra, &espada);
-                            estado = JOGANDO;
-                            break;
-                        case 1: // Scoreboard
-                            estado = SCOREBOARD;
-                            break;
-                        case 2: // Sair
-                            CloseWindow();
-                            return 0;
-                    }
+            if (IsKeyPressed(KEY_ENTER))
+            {
+                switch (selecao_menu)
+                {
+                case 0: // Novo jogo
+                    level_atual = 1;
+                    Comeca_jogo(&estado, &level_atual, &jogador, monstros, &numero_monstros, vidas_extra, &numero_vidas_extra, &espada);
+                    estado = JOGANDO;
+                    ranking_atualizado = false;
+                    break;
+
+                case 1: // scoreborad
+                    estado = SCOREBOARD;
+                    break;
+
+                case 2: // sair
+                    CloseWindow();
+                    return 0;
                 }
-                break;
+            }
+            break;
 
-            case JOGANDO:
-                Atualiza_jogo(&estado, &level_atual, &jogador, monstros, &numero_monstros,
-                           vidas_extra, &numero_vidas_extra, &espada);
-                break;
+        case JOGANDO:
+            Atualiza_jogo(&estado, &level_atual, &jogador, monstros, &numero_monstros, vidas_extra, &numero_vidas_extra, &espada);
+            break;
 
-            case PAUSA:
-                // Navega√ß√£o no menu de pausa
-                if (IsKeyPressed(KEY_DOWN)) selecao_pause = (selecao_pause + 1) % 3;
-                if (IsKeyPressed(KEY_UP)) selecao_pause = (selecao_pause + 2) % 3;
+        case PAUSA:
+            // NavegaÁ„o no menu de pausa
+            if (IsKeyPressed(KEY_DOWN))
+            {
+                selecao_pause = (selecao_pause + 1) % 3;
+            }
+            if (IsKeyPressed(KEY_UP))
+            {
+                selecao_pause = (selecao_pause + 2) % 3;
+            }
 
-                if (IsKeyPressed(KEY_ENTER)) {
-                    switch (selecao_pause) {
-                        case 0: // Continuar
-                            estado = JOGANDO;
-                            break;
-                        case 1: // Voltar ao menu
-                            estado = MENU;
-                            break;
-                        case 2: // Sair
-                            CloseWindow();
-                            return 0;
-                    }
-                }
-                break;
+            if (IsKeyPressed(KEY_ENTER))
+            {
+                switch (selecao_pause)
+                {
+                case 0: // Continuar
+                    estado = JOGANDO;
+                    break;
 
-            case DERROTA:
-                // Navega√ß√£o no menu de game over
-                if (IsKeyPressed(KEY_DOWN)) selecao_derrota = (selecao_derrota + 1) % 3;
-                if (IsKeyPressed(KEY_UP)) selecao_derrota = (selecao_derrota + 2) % 3;
-
-                if (IsKeyPressed(KEY_ENTER)) {
-                    switch (selecao_derrota) {
-                        case 0: // Carregar jogo (n√£o implementado)
-                            // Implementar se for requisito extra
-                            break;
-                        case 1: // Reiniciar jogo
-                            level_atual = 1;
-                            Comeca_jogo(&estado, &level_atual, &jogador, monstros, &numero_monstros,
-                                     vidas_extra, &numero_vidas_extra, &espada);
-                            estado = JOGANDO;
-                            break;
-                        case 2: // Voltar ao menu
-                            estado = MENU;
-                            break;
-                    }
-                }
-                break;
-
-            case VITORIA:
-                // Navega√ß√£o na tela de vit√≥ria
-                if (IsKeyPressed(KEY_DOWN)) selecao_vitoria = (selecao_vitoria + 1) % 2;
-                if (IsKeyPressed(KEY_UP)) selecao_vitoria = (selecao_vitoria + 1) % 2;
-
-                if (IsKeyPressed(KEY_ENTER)) {
-                    switch (selecao_vitoria) {
-                        case 0: // Voltar ao menu
-                            estado = MENU;
-                            break;
-                        case 1: // Sair
-                            CloseWindow();
-                            return 0;
-                    }
-                }
-                break;
-
-            case SCOREBOARD:
-                if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_ESCAPE)) {
+                case 1:// Voltar ao Menu
                     estado = MENU;
+                    break;
+
+                case 2: // Sair
+                    CloseWindow();
+                    return 0;
                 }
-                break;
+            }
+            break;
+
+        case DERROTA:
+            if (!ranking_atualizado)
+            {
+                Nome_do_jogador(entrada_score.nome);
+                entrada_score.score = jogador.score;
+                Atualiza_ranking(entrada_score, ranking);
+                Salva_ranking(ranking);
+                ranking_atualizado = true;
+            }
+            // NavegaÁ„o no menu de game over
+            if (IsKeyPressed(KEY_DOWN))
+            {
+                selecao_derrota = (selecao_derrota + 1) % 2;
+            }
+            if (IsKeyPressed(KEY_UP))
+            {
+                selecao_derrota = (selecao_derrota + 1) % 2;
+            }
+
+            if (IsKeyPressed(KEY_ENTER))
+            {
+                switch (selecao_derrota)
+                {
+                case 0:
+                    level_atual = 1;
+                    Comeca_jogo(&estado, &level_atual, &jogador, monstros, &numero_monstros, vidas_extra, &numero_vidas_extra, &espada);
+                    estado = JOGANDO;
+                    ranking_atualizado = false;
+                    break;
+
+                case 1: // Reiniciar jogo
+                    estado = MENU;
+                    break;
+                }
+            }
+            break;
+
+        case VITORIA:
+            if (!ranking_atualizado)
+            {
+                Nome_do_jogador(entrada_score.nome);
+                entrada_score.score = jogador.score;
+                Atualiza_ranking(entrada_score, ranking);
+                Salva_ranking(ranking);
+                ranking_atualizado = true;
+            }
+            // NavegaÁ„o na tela de vitÛria
+            if (IsKeyPressed(KEY_DOWN))
+            {
+                selecao_vitoria = (selecao_vitoria + 1) % 2;
+            }
+            if (IsKeyPressed(KEY_UP))
+            {
+                selecao_vitoria = (selecao_vitoria + 1) % 2;
+            }
+
+            if (IsKeyPressed(KEY_ENTER))
+            {
+                switch (selecao_vitoria)
+                {
+                case 0: // Voltar ao menu
+                    estado = MENU;
+                    break;
+
+                case 1: // Sair
+                    CloseWindow();
+                    return 0;
+                }
+            }
+            break;
+
+        case SCOREBOARD:
+            if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_ESCAPE))
+            {
+                estado = MENU;
+            }
+            break;
         }
 
-        // Renderiza√ß√£o
+        // RenderizaÁ„o
         BeginDrawing();
-            ClearBackground(RAYWHITE);
+        ClearBackground(RAYWHITE);
 
-            switch (estado) {
-                case MENU:
-                    Desenha_menu(&estado, &selecao_menu);
-                    break;
+        switch (estado)
+        {
+        case MENU:
+            Desenha_menu(&selecao_menu);
+            break;
 
-                case JOGANDO:
-                    Desenha_jogo(&jogador, monstros, numero_monstros, vidas_extra, numero_vidas_extra, &espada, level_atual);
-                    break;
+        case JOGANDO:
+            Desenha_jogo(&jogador, monstros, numero_monstros, vidas_extra, numero_vidas_extra, &espada, level_atual);
+            break;
 
-                case PAUSA:
-                    Desenha_jogo(&jogador, monstros, numero_monstros, vidas_extra, numero_vidas_extra, &espada, level_atual);
-                    Desenha_menu_pausa(&selecao_pause);
-                    break;
+        case PAUSA:
+            Desenha_jogo(&jogador, monstros, numero_monstros, vidas_extra, numero_vidas_extra, &espada, level_atual);
+            Desenha_menu_pausa(&selecao_pause);
+            break;
 
-                case DERROTA:
-                    Desenha_menu_derrota(&selecao_derrota);
-                    break;
+        case DERROTA:
+            Desenha_menu_derrota(&selecao_derrota);
+            break;
 
-                case VITORIA:
-                    Desenha_menu_vitoria(&selecao_vitoria);
-                    break;
+        case VITORIA:
+            Desenha_menu_vitoria(&selecao_vitoria);
+            break;
 
-                case SCOREBOARD:
-                    Desenha_scoreboard(ranking);
-                    break;
-            }
+        case SCOREBOARD:
+            Desenha_scoreboard(ranking);
+            break;
+        }
         EndDrawing();
     }
 
     // Salvar ranking e liberar recursos
     Salva_ranking(ranking);
     Descarrega_texturas();
-    CloseAudioDevice();
     CloseWindow();
     return 0;
 }
 
-void Atualiza_jogo(Estado_jogo_t *estado, int *level_atual, Jogador_t *jogador,
-                Monstro_t monstros[], int *numero_monstros,
-                Vida_Extra_t vidas_extra[], int *numero_vidas_extra,
-                Espada_t *espada) {
+void Atualiza_jogo(Estado_jogo_t *estado, int *level_atual, Jogador_t *jogador, Monstro_t monstros[], int *numero_monstros, Vida_Extra_t vidas_extra[], int *numero_vidas_extra, Espada_t *espada)
+{
     // Pausar o jogo
-    if (IsKeyPressed(KEY_TAB)) {
+    if (IsKeyPressed(KEY_TAB))
+    {
         *estado = PAUSA;
         return;
     }
 
     // Movimento do jogador
-    if (IsKeyPressed(KEY_W) || IsKeyPressed(KEY_UP)) Movimento_jogador(jogador, KEY_W);
-    if (IsKeyPressed(KEY_S) || IsKeyPressed(KEY_DOWN)) Movimento_jogador(jogador, KEY_S);
-    if (IsKeyPressed(KEY_A) || IsKeyPressed(KEY_LEFT)) Movimento_jogador(jogador, KEY_A);
-    if (IsKeyPressed(KEY_D) || IsKeyPressed(KEY_RIGHT)) Movimento_jogador(jogador, KEY_D);
+    if (IsKeyPressed(KEY_W) || IsKeyPressed(KEY_UP))
+    {
+        Movimento_jogador(jogador, KEY_W);
+    }
+    else if (IsKeyPressed(KEY_S) || IsKeyPressed(KEY_DOWN))
+    {
+        Movimento_jogador(jogador, KEY_S);
+    }
+    else if (IsKeyPressed(KEY_A) || IsKeyPressed(KEY_LEFT))
+    {
+        Movimento_jogador(jogador, KEY_A);
+    }
+    else if (IsKeyPressed(KEY_D) || IsKeyPressed(KEY_RIGHT))
+    {
+        Movimento_jogador(jogador, KEY_D);
+    }
 
     // Ativar espada
-    if (IsKeyPressed(KEY_J) && jogador->tem_espada && !jogador->ativa_espada) {
+    if (IsKeyPressed(KEY_J) && jogador->tem_espada && !jogador->ativa_espada)
+    {
         jogador->ativa_espada = true;
-        jogador->cooldown_espada = 0.2f; // 0.2 segundos de dura√ß√£o
+        jogador->cooldown_espada = 0.2f; // 0.2 segundos de duraÁ„o
     }
 
     // Atualizar temporizador da espada
-    if (jogador->ativa_espada) {
+    if (jogador->ativa_espada)
+    {
         jogador->cooldown_espada -= GetFrameTime();
-        if (jogador->cooldown_espada <= 0) {
+        if (jogador->cooldown_espada <= 0)
+        {
             jogador->ativa_espada = false;
-        } else {
+        }
+        else
+        {
             // Verificar se a espada atingiu monstros
             Usar_espada(jogador, monstros, *numero_monstros);
         }
@@ -338,118 +419,128 @@ void Atualiza_jogo(Estado_jogo_t *estado, int *level_atual, Jogador_t *jogador,
     // Movimento dos monstros
     Movimento_monstros(monstros, *numero_monstros);
 
-    // Verificar colis√µes
-    Checar_colisoes(estado, jogador, monstros, *numero_monstros,
-                   vidas_extra, *numero_vidas_extra, espada);
+    // Verificar colisıes
+    Checar_colisoes(estado, jogador, monstros, *numero_monstros, vidas_extra, *numero_vidas_extra, espada);
 
-    // Verificar vit√≥ria na fase
-    bool monstros_morreram = (*numero_monstros > 0);
-    for (int i = 0; i < *numero_monstros; i++) {
-        if (monstros[i].vivo) {
+    // Verificar vitÛria na fase
+    bool monstros_morreram = true;
+    for (int i = 0; i < *numero_monstros; i++)
+    {
+        if (monstros[i].vivo)
+        {
             monstros_morreram = false;
         }
     }
 
-    if (monstros_morreram) {
+    if (monstros_morreram)
+    {
         (*level_atual)++;
-        if (*level_atual > MAX_NIVEIS) {
+        if (*level_atual > MAX_NIVEIS)
+        {
             *estado = VITORIA;
-        } else {
-            Reseta_nivel(*level_atual, jogador, monstros, numero_monstros,
-                       vidas_extra, numero_vidas_extra, espada);
+        }
+        else
+        {
+            Reseta_nivel(*level_atual, jogador, monstros, numero_monstros, vidas_extra, numero_vidas_extra, espada);
         }
     }
 }
 
-void Atualiza_ranking(int score, Score_t ranking[]) {
-    char nome[20];
-    printf("Digite seu nome para o ranking: ");
-    fgets(nome, 20, stdin);
-
-
-    // Determina a posi√ß√£o de inser√ß√£o
-    int posi√ß√£o = MAX_RANKING;
-    for (int i = 0; i < MAX_RANKING; i++) {
-        if (score > ranking[i].score) {
-            posi√ß√£o = i;
-            break;
-        }
+void Atualiza_ranking(TIPO_SCORE novo, TIPO_SCORE ranking[])
+{
+    int pos = MAX_RANKING;
+    int i = 0;
+    // Encontra a primeira posiÁ„o onde novo.pontos seja maior
+    while (i < MAX_RANKING && novo.score <= ranking[i].score)
+    {
+        i++;
     }
-
-    // Se for pontua√ß√£o suficiente para entrar no ranking
-    if (posi√ß√£o < MAX_RANKING) {
-        // Desloca os valores inferiores
-        for (int j = MAX_RANKING - 1; j > posi√ß√£o; j--) {
+    if (i < MAX_RANKING)
+    {
+        pos = i;
+    }
+    // Se entrou no top, move demais e insere
+    if (pos < MAX_RANKING)
+    {
+        for (int j = MAX_RANKING - 1; j > pos; j--)
+        {
             ranking[j] = ranking[j - 1];
         }
-        // Insere novo recorde
-        strcpy(ranking[posi√ß√£o].nome, nome);
-        ranking[posi√ß√£o].score = score;
+        ranking[pos] = novo;
     }
 }
 
-bool Carrega_ranking(Score_t ranking[]) {
-    FILE *file = fopen("ranking.bin", "rb");
-    if (!file) {return false;};
+bool Carrega_ranking(TIPO_SCORE ranking[])
+{
+    FILE *file = fopen("conteudo/bin/ranking.bin", "rb");
+    if (!file)
+    {
+        return false;
+    }
 
-    fread(ranking, sizeof(Score_t), 5, file);
+    fread(ranking, sizeof(TIPO_SCORE), MAX_RANKING, file);
     fclose(file);
     return true;
 }
 
-bool Carrega_mapa(int level) {
-    char mapas[LINHAS];
+bool Carrega_mapa(int level)
+{
+    char mapas[64];
     char temporario[COLUNAS + 2];
-    // gera ‚Äúmapa01.txt‚Äù, ‚Äúmapa02.txt‚Äù...
-    sprintf(mapas, "mapa%d.txt", level);
+    // gera ìmapa01.txtî, ìmapa02.txtî...
+    snprintf(mapas, sizeof(mapas), "conteudo/mapas/mapa%02d.txt", level);
 
     FILE *f = fopen(mapas, "r");
-     if (!f) {
-        // n√£o encontrou o arquivo - vitoria
+    if (!f)
+    {
+        // n„o encontrou o arquivo - vitoria
         return false;
     }
-      // +1 para '\n' e +1 para '\0'
-    for (int i = 0; i < LINHAS; i++) {
-        if (fgets(temporario, sizeof temporario, f)) {
-        // copia exatamente COLUNAS caracteres (ignora '\n' se houver)
-        for (int j = 0; j < COLUNAS; j++) {
-            mapa[i][j] = temporario[j];
+    // +1 para '\n' e +1 para '\0'
+    for (int i = 0; i < LINHAS; i++)
+    {
+        if (fgets(temporario, sizeof temporario, f))
+        {
+            // copia exatamente COLUNAS caracteres (ignora '\n' se houver)
+            for (int j = 0; j < COLUNAS && temporario[j] != '\n' && temporario[j] != '\r'; j++)
+            {
+                mapa[i][j] = temporario[j];
+            }
         }
-    }}
+    }
 
     fclose(f);
     return true;
 
 }
 
-void Carrega_texturas() {
-    // Carregar texturas do jogador para cada dire√ß√£o
-    textura_jogador[NORTE] = LoadTexture("jogador-norte.png");
-    textura_jogador[SUL]   = LoadTexture("jogador-sul.png");
-    textura_jogador[LESTE] = LoadTexture("jogador-leste.png");
-    textura_jogador[OESTE] = LoadTexture("jogador-oeste.png");
+void Carrega_texturas()
+{
+    // Carregar texturas do jogador para cada direÁ„o
+    textura_jogador[NORTE] = LoadTexture("conteudo/texturas/jogador-norte.png");
+    textura_jogador[SUL]   = LoadTexture("conteudo/texturas/jogador-sul.png");
+    textura_jogador[LESTE] = LoadTexture("conteudo/texturas/jogador-leste.png");
+    textura_jogador[OESTE] = LoadTexture("conteudo/texturas/jogador-oeste.png");
 
-   // Carregar texturas dos monstros para cada dire√ß√£o
-    textura_monstros[NORTE] = LoadTexture("monstro-norte.png");
-    textura_monstros[SUL]   = LoadTexture("monstro-sul.png");
-    textura_monstros[LESTE] = LoadTexture("monstro-leste.png");
-    textura_monstros[OESTE] = LoadTexture("monstro-oeste.png");
+    // Carregar texturas dos monstros para cada direÁ„o
+    textura_monstros[NORTE] = LoadTexture("conteudo/texturas/monstro-norte.png");
+    textura_monstros[SUL]   = LoadTexture("conteudo/texturas/monstro-sul.png");
+    textura_monstros[LESTE] = LoadTexture("conteudo/texturas/monstro-leste.png");
+    textura_monstros[OESTE] = LoadTexture("conteudo/texturas/monstro-oeste.png");
 
     // Carregar texturas de outros elementos
-    textura_menu   = LoadTexture("menu.png");
-    textura_parede = LoadTexture("parede.png");
-    textura_espada = LoadTexture("espada.png");
-    textura_vida   = LoadTexture("vida.png");
-    textura_chao   = LoadTexture("chao.png");
+    textura_menu   = LoadTexture("conteudo/texturas/menu.png");
+    textura_parede = LoadTexture("conteudo/texturas/parede.png");
+    textura_espada = LoadTexture("conteudo/texturas/espada.png");
+    textura_vida   = LoadTexture("conteudo/texturas/vida.png");
+    textura_chao   = LoadTexture("conteudo/texturas/chao.png");
 }
 
-void Comeca_jogo(Estado_jogo_t *estado, int *level_atual, Jogador_t *jogador,
-              Monstro_t monstros[], int *numero_monstros,
-              Vida_Extra_t vidas_extra[], int *numero_vidas_extra,
-              Espada_t *espada) {
+void Comeca_jogo(Estado_jogo_t *estado, int *level_atual, Jogador_t *jogador, Monstro_t monstros[], int *numero_monstros, Vida_Extra_t vidas_extra[], int *numero_vidas_extra, Espada_t *espada)
+{
     // Carregar mapa
-
-   if (!Carrega_mapa(*level_atual)) {
+    if (!Carrega_mapa(*level_atual))
+    {
         *estado = VITORIA;
         return;
     }
@@ -464,44 +555,49 @@ void Comeca_jogo(Estado_jogo_t *estado, int *level_atual, Jogador_t *jogador,
     jogador->ativa_espada = false;
     jogador->cooldown_espada = 0.0f;
 
-    // Encontrar posi√ß√µes iniciais
+    // Encontrar posiÁıes iniciais
     *numero_monstros = 0;
     *numero_vidas_extra = 0;
     espada->coletado = false;
 
-    for (int i = 0; i < LINHAS; i++) {
-        for (int j = 0; j < COLUNAS; j++) {
-            switch (mapa[i][j]) {
-                case 'J': // Jogador
-                    jogador->x = j;
-                    jogador->y = i;
-                    break;
+    for (int i = 0; i < LINHAS; i++)
+    {
+        for (int j = 0; j < COLUNAS; j++)
+        {
+            switch (mapa[i][j])
+            {
+            case 'J': // Jogador
+                jogador->x = j;
+                jogador->y = i;
+                break;
 
-                case 'M': // Monstro
-                    if (*numero_monstros < MAX_MONSTROS) {
-                        monstros[*numero_monstros].x = j;
-                        monstros[*numero_monstros].y = i;
-                        monstros[*numero_monstros].direcao = rand() % 4;
-                        monstros[*numero_monstros].pontos = rand() % 101;
-                        monstros[*numero_monstros].vivo = true;
-                        monstros[*numero_monstros].cooldown_mover = 0.0f;
-                        (*numero_monstros)++;
-                    }
-                    break;
+            case 'M': // Monstro
+                if (*numero_monstros < MAX_MONSTROS)
+                {
+                    monstros[*numero_monstros].x = j;
+                    monstros[*numero_monstros].y = i;
+                    monstros[*numero_monstros].direcao = rand() % 4;
+                    monstros[*numero_monstros].pontos = rand() % 101;
+                    monstros[*numero_monstros].vivo = true;
+                    monstros[*numero_monstros].cooldown_mover = 0.0f;
+                    (*numero_monstros)++;
+                }
+                break;
 
-                case 'E': // Espada
-                    espada->x = j;
-                    espada->y = i;
-                    break;
+            case 'E': // Espada
+                espada->x = j;
+                espada->y = i;
+                break;
 
-                case 'V': // Vida extra
-                    if (*numero_vidas_extra < MAX_VIDA_EXTRA) {
-                        vidas_extra[*numero_vidas_extra].x = j;
-                        vidas_extra[*numero_vidas_extra].y = i;
-                        vidas_extra[*numero_vidas_extra].coletado = false;
-                        (*numero_vidas_extra)++;
-                    }
-                    break;
+            case 'V': // Vida extra
+                if (*numero_vidas_extra < MAX_VIDA_EXTRA)
+                {
+                    vidas_extra[*numero_vidas_extra].x = j;
+                    vidas_extra[*numero_vidas_extra].y = i;
+                    vidas_extra[*numero_vidas_extra].coletado = false;
+                    (*numero_vidas_extra)++;
+                }
+                break;
             }
         }
     }
@@ -512,217 +608,259 @@ void Comeca_jogo(Estado_jogo_t *estado, int *level_atual, Jogador_t *jogador,
 
 
 
-void Checar_colisoes(Estado_jogo_t *estado, Jogador_t *jogador,
-                     Monstro_t monstros[], int numero_monstros,
-                     Vida_Extra_t vidas_extra[], int numero_vidas_extra,
-                     Espada_t *espada) {
-
-    // Verificar colis√£o com monstros
-    for (int i = 0; i < numero_monstros; i++) {
-        if (monstros[i].vivo && monstros[i].x == jogador->x && monstros[i].y == jogador->y) {
+void Checar_colisoes(Estado_jogo_t *estado, Jogador_t *jogador, Monstro_t monstros[], int numero_monstros, Vida_Extra_t vidas_extra[], int numero_vidas_extra, Espada_t *espada)
+{
+    // Verificar colis„o com monstros
+    for (int i = 0; i < numero_monstros; i++)
+    {
+        if (monstros[i].vivo && monstros[i].x == jogador->x && monstros[i].y == jogador->y)
+        {
             jogador->vidas--;
-            if (jogador->vidas <= 0) {
+            if (jogador->vidas <= 0)
+            {
                 *estado = DERROTA;
-            }else{
-            // Reposicionar monstro ap√≥s contato
-            Teleportar_entidade(&monstros[i].x, &monstros[i].y, mapa);}
+            }
+            else
+            {
+                // Reposicionar monstro apÛs contato
+                Teleportar_entidade(&monstros[i].x, &monstros[i].y, mapa);
+            }
         }
     }
 
-    // Verificar colis√£o com espada
-    if (!espada->coletado && !jogador->tem_espada &&
-        espada->x == jogador->x && espada->y == jogador->y) {
+    // Verificar colis„o com espada
+    if (!espada->coletado && !jogador->tem_espada && espada->x == jogador->x && espada->y == jogador->y)
+    {
         jogador->tem_espada = true;
         espada->coletado = true;
     }
 
-    // Verificar colis√£o com vidas extras
-    for (int i = 0; i < numero_vidas_extra; i++) {
-        if (!vidas_extra[i].coletado &&
-            vidas_extra[i].x == jogador->x && vidas_extra[i].y == jogador->y) {
+    // Verificar colis„o com vidas extras
+    for (int i = 0; i < numero_vidas_extra; i++)
+    {
+        if (!vidas_extra[i].coletado && vidas_extra[i].x == jogador->x && vidas_extra[i].y == jogador->y && jogador->vidas < MAX_VIDA_EXTRA)
+        {
             jogador->vidas++;
             vidas_extra[i].coletado = true;
         }
     }
 }
 
-void Desenha_jogo(Jogador_t *jogador, Monstro_t monstros[], int numero_monstros,
-              Vida_Extra_t vidas_extra[], int numero_vidas_extra,
-              Espada_t *espada, int level_atual) {
-
+void Desenha_jogo(Jogador_t *jogador, Monstro_t monstros[], int numero_monstros, Vida_Extra_t vidas_extra[], int numero_vidas_extra, Espada_t *espada, int level_atual)
+{
     float escala_chao     = (float)CELULA / textura_chao.width;
     float escala_parede   = (float)CELULA / textura_parede.width;
     float escala_monstro  = (float)CELULA / textura_monstros[0].width;
     float escala_espada   = (float)CELULA / textura_espada.width;
     float escala_vida     = (float)CELULA / textura_vida.width;
 
-     // Desenhar fundo (ch√£o e paredes)
-    for (int i = 0; i < LINHAS; i++) {
-        for (int j = 0; j < COLUNAS; j++) {
-            // Desenhar ch√£o
-            DrawTextureEx(textura_chao,
-                          (Vector2){ j * CELULA, i * CELULA + BARRA_STATUS },
-                          0.0f, escala_chao, WHITE);
-
+    // Desenhar fundo (ch„o e paredes)
+    for (int i = 0; i < LINHAS; i++)
+    {
+        for (int j = 0; j < COLUNAS; j++)
+        {
+            // Desenhar ch„o
+            DrawTextureEx(textura_chao, (Vector2)
+            {
+                j * CELULA, i * CELULA + BARRA_STATUS
+            }, 0.0f, escala_chao, WHITE);
             // Desenhar parede, se existir
-            if (mapa[i][j] == 'P') {
-                DrawTextureEx(textura_parede,
-                              (Vector2){ j * CELULA, i * CELULA + BARRA_STATUS },
-                              0.0f, escala_parede, WHITE);
+            if (mapa[i][j] == 'P')
+            {
+                DrawTextureEx(textura_parede, (Vector2)
+                {
+                    j * CELULA, i * CELULA + BARRA_STATUS
+                }, 0.0f, escala_parede, WHITE);
             }
         }
     }
 
     // Desenhar itens: espada e vidas extra espalhadas no mapa
-    for (int i = 0; i < numero_vidas_extra; i++) {
-       if (!vidas_extra[i].coletado){
-                DrawTextureEx(textura_vida,
-                (Vector2){ vidas_extra[i].x * CELULA, vidas_extra[i].y * CELULA + BARRA_STATUS },
-                0.0f, escala_vida, WHITE);
-       }
+    for (int i = 0; i < numero_vidas_extra; i++)
+    {
+        if (!vidas_extra[i].coletado)
+        {
+            DrawTextureEx(textura_vida, (Vector2)
+            {
+                vidas_extra[i].x * CELULA, vidas_extra[i].y * CELULA + BARRA_STATUS
+            }, 0.0f, escala_vida, WHITE);
+        }
     }
 
-    if (!espada->coletado) {
-            DrawTextureEx(textura_espada,
-            (Vector2){ espada->x * CELULA, espada->y * CELULA + BARRA_STATUS },
-            0.0f, escala_espada, WHITE);
+    if (!espada->coletado)
+    {
+        DrawTextureEx(textura_espada, (Vector2)
+        {
+            espada->x * CELULA, espada->y * CELULA + BARRA_STATUS
+        }, 0.0f, escala_espada, WHITE);
     }
 
     // Desenhar monstros
-    for (int i = 0; i < numero_monstros; i++) {
-        if (monstros[i].vivo) {
-            DrawTextureEx(textura_monstros[monstros[i].direcao],
-                          (Vector2){ monstros[i].x * CELULA, monstros[i].y * CELULA + BARRA_STATUS },
-                          0.0f, escala_monstro, WHITE);
+    for (int i = 0; i < numero_monstros; i++)
+    {
+        if (monstros[i].vivo)
+        {
+            DrawTextureEx(textura_monstros[monstros[i].direcao], (Vector2)
+            {
+                monstros[i].x * CELULA, monstros[i].y * CELULA + BARRA_STATUS
+            }, 0.0f, escala_monstro, WHITE);
         }
     }
 
-    // Desenhar jogador com DrawTexturePro para garantir mesma largura e altura
+    //Desenhar jogador com DrawTexturePro para garantir mesma largura e altura
     Texture2D tex_jogador = textura_jogador[jogador->direcao];
-    Rectangle fonte = { 0.0f, 0.0f, (float)tex_jogador.width, (float)tex_jogador.height };
-    Rectangle destino = { jogador->x * CELULA,
-                          jogador->y * CELULA + BARRA_STATUS,
-                          (float)CELULA, (float)CELULA };
-    Vector2 origem = { 0.0f, 0.0f };
+    Rectangle fonte     = { 0.0f, 0.0f, (float)tex_jogador.width, (float)tex_jogador.height };
+    Rectangle destino   = { jogador->x * CELULA, jogador->y * CELULA + BARRA_STATUS, (float)CELULA, (float)CELULA };
+    Vector2 origem      = { 0.0f, 0.0f };
     DrawTexturePro(tex_jogador, fonte, destino, origem, 0.0f, WHITE);
 
-
-    // Desenhar √°rea de ataque da espada
-    if (jogador->ativa_espada) {
-    int x0 = jogador->x;
-    int y0 = jogador->y;
-    int x1 = x0;
-    int y1 = y0;
-
-    // 1) Define ponto final conforme a dire√ß√£o
-    switch (jogador->direcao) {
-        case NORTE: y1 -= ALCANCE_ESPADA; break;
-        case SUL:   y1 += ALCANCE_ESPADA; break;
-        case LESTE: x1 += ALCANCE_ESPADA; break;
-        case OESTE: x1 -= ALCANCE_ESPADA; break;
-    }
-
-    // 2) Limita dentro do mapa
-    if (x1 < 0) x1 = 0;
-    if (x1 >= COLUNAS) x1 = COLUNAS - 1;
-    if (y1 < 0) y1 = 0;
-    if (y1 >= LINHAS) y1 = LINHAS - 1;
-
-    // 3) Calcula intervalos
-    int min_x = (x0 < x1) ? x0 : x1;
-    int max_x = (x0 > x1) ? x0 : x1;
-    int min_y = (y0 < y1) ? y0 : y1;
-    int max_y = (y0 > y1) ? y0 : y1;
-
-    // 4) Desenha a ‚Äúlinha‚Äù de ataque: ou na coluna do jogador (vertical)
-    //    ou na linha do jogador (horizontal)
-    for (int y = min_y; y <= max_y; y++) {
-        for (int x = min_x; x <= max_x; x++) {
-            if (x == x0 || y == y0) {
-                DrawRectangle(
-                  x * CELULA,
-                  y * CELULA + BARRA_STATUS,
-                  CELULA, CELULA,
-                  (Color){255, 0, 0, 128}
-                );
-            }
+    // Desenhar ·rea de ataque da espada
+    if (jogador->ativa_espada)
+    {
+        int dx = 0, dy = 0;
+        switch (jogador->direcao)
+        {
+        case NORTE:
+            dy = -1;
+            break;
+        case SUL:
+            dy = +1;
+            break;
+        case LESTE:
+            dx = +1;
+            break;
+        case OESTE:
+            dx = -1;
+            break;
+        }
+        for (int i = 1;
+                i <= ALCANCE_ESPADA
+                && jogador->x + dx*i >= 0
+                && jogador->x + dx*i < COLUNAS
+                && jogador->y + dy*i >= 0
+                && jogador->y + dy*i < LINHAS;
+                i++)
+        {
+            int nx = jogador->x + dx * i;
+            int ny = jogador->y + dy * i;
+            DrawRectangle(
+                nx * CELULA,
+                ny * CELULA + BARRA_STATUS,
+                CELULA, CELULA,
+                (Color)
+            {
+                255, 0, 0, 128
+            });
         }
     }
-    }
-
     // Desenhar barra de status
     Desenha_barra_status(jogador, level_atual);
 }
 
-void Desenha_barra_status(Jogador_t *jogador, int level_atual) {
-    float escala_vida     = (float)CELULA / textura_vida.width;
+void Desenha_barra_status(Jogador_t *jogador, int level_atual)
+{
+    float escala_vida = (float)CELULA / textura_vida.width;
     // Fundo da barra de status
-    DrawRectangle(0, 0, LARGURA_TELA, BARRA_STATUS, DARKGRAY);
+    DrawRectangle(0, 0, LARGURA_TELA, BARRA_STATUS, BLACK);
 
     // Textos
-    DrawTextEx(fonte_jogo, TextFormat("Pontos: %d", jogador->score),
-               (Vector2){20, 20}, 20, 2, YELLOW);
+    DrawTextEx(fonte_jogo, TextFormat("Pontos: %d", jogador->score), (Vector2)
+    {
+        20, 20
+    }, 20, 2, YELLOW);
 
-    DrawTextEx(fonte_jogo, TextFormat("Nivel: %d", level_atual),
-               (Vector2){LARGURA_TELA/2 - 50, 20}, 20, 2, WHITE);
+    DrawTextEx(fonte_jogo, TextFormat("Nivel: %d", level_atual), (Vector2)
+    {
+        LARGURA_TELA/2 - 50, 20
+    }, 20, 2, WHITE);
 
-    // Vidas (representadas por cora√ß√µes)
-    for (int i = 0; i < jogador->vidas; i++) {
-        DrawTextureEx(textura_vida,
-                      (Vector2){ LARGURA_TELA - 100 - i * (int)(CELULA * escala_vida), 10 },
-                      0.0f, escala_vida, WHITE);
+    // Vidas (representadas por coraÁıes)
+    for (int i = 0; i < jogador->vidas; i++)
+    {
+        DrawTextureEx(textura_vida, (Vector2)
+        {
+            LARGURA_TELA - 100 - i * 20, 10
+        }, 0.0f, escala_vida, WHITE);
     }
 
     // Indicador de espada
-    if (jogador->tem_espada) {
-        DrawTextEx(fonte_jogo, "ESPADA", (Vector2){LARGURA_TELA - 200, 20}, 20, 2, BLUE);
+    if (jogador->tem_espada)
+    {
+        DrawTextEx(fonte_jogo, "ESPADA", (Vector2)
+        {
+            LARGURA_TELA - 300, 20
+        }, 20, 2, GREEN);
     }
 }
 
-// Implementa√ß√µes das fun√ß√µes de menu (simplificadas)
-void Desenha_menu(Estado_jogo_t *estado, int *selecao_menu) {
-    (void)estado;
+// ImplementaÁıes das funÁıes de menu (simplificadas)
+void Desenha_menu(int *selecao_menu)
+{
     Rectangle origem = { 0.0f, 0.0f, (float)textura_menu.width, (float)textura_menu.height };
     Rectangle destino = { 0.0f, 0.0f, 1200, 860 }; // tamanho desejado
     Vector2 origem_desenho = { 0.0f, 0.0f };
 
     DrawTexturePro(textura_menu, origem, destino, origem_desenho, 0.0f, WHITE);
 
-    // Fundo transl√∫cido por cima para contraste
-    DrawRectangle(0, 0, 1200, 860, (Color){0, 0, 0, 150});
+    // Fundo transl˙cido por cima para contraste
+    DrawRectangle(0, 0, 1200, 860, (Color)
+    {
+        0, 0, 0, 150
+    });
 
-    // T√≠tulo
-    DrawTextEx(fonte_jogo, "ZELDA INF", (Vector2){LARGURA_TELA/2 - 100, 100}, 48, 2, GOLD);
+    // TÌtulo
+    DrawTextEx(fonte_jogo, "ZELDA INF", (Vector2)
+    {
+        LARGURA_TELA/2 - 100, 100
+    }, 50, 2, GOLD);
 
-    // Op√ß√µes
+    // OpÁıes
     const char *opcoes[] = {"Novo Jogo", "Scoreboard", "Sair"};
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++)
+    {
         Color cor = (i == *selecao_menu) ? YELLOW : WHITE;
-        DrawTextEx(fonte_jogo, opcoes[i], (Vector2){LARGURA_TELA/2 - 80, 200 + i * 60}, 30, 2, cor);
+        DrawTextEx(fonte_jogo, opcoes[i], (Vector2)
+        {
+            LARGURA_TELA/2 - 80, 200 + i * 60
+        }, 30, 2, cor);
     }
 }
 
-void Desenha_menu_pausa(int *selecao_pause) {
+void Desenha_menu_pausa(int *selecao_pause)
+{
     // Sobrepor semi-transparente
-    DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, (Color){0, 0, 0, 180});
+    DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, (Color)
+    {
+        0, 0, 0, 180
+    });
 
-    // T√≠tulo
-    DrawTextEx(fonte_jogo, "JOGO PAUSADO", (Vector2){LARGURA_TELA/2 - 120, 150}, 36, 2, WHITE);
+    // TÌtulo
+    DrawTextEx(fonte_jogo, "JOGO PAUSADO", (Vector2)
+    {
+        LARGURA_TELA/2 - 120, 150
+    }, 40, 2, WHITE);
 
-    // Op√ß√µes
+    // OpÁıes
     const char *opcoes[] = {"Continuar", "Voltar ao Menu", "Sair"};
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++)
+    {
         Color cor = (i == *selecao_pause) ? YELLOW : LIGHTGRAY;
-        DrawTextEx(fonte_jogo, opcoes[i], (Vector2){LARGURA_TELA/2 - 80, 250 + i * 60}, 30, 2, cor);
+        DrawTextEx(fonte_jogo, opcoes[i], (Vector2)
+        {
+            LARGURA_TELA/2 - 80, 250 + i * 60
+        }, 30, 2, cor);
     }
 }
 
 
-void Descarrega_texturas() {
-    for (int i = 0; i < 4; i++) {
-    UnloadTexture(textura_jogador[i]);
+void Descarrega_texturas()
+{
+    for (int i = 0; i < 4; i++)
+    {
+        UnloadTexture(textura_jogador[i]);
     }
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; i++)
+    {
         UnloadTexture(textura_monstros[i]);
     }
     UnloadTexture(textura_parede);
@@ -732,77 +870,121 @@ void Descarrega_texturas() {
     UnloadFont(fonte_jogo);
 }
 
-// Implementa√ß√µes restantes de menus (simplificadas)
-void Desenha_scoreboard(Score_t ranking[]) {
-    DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, (Color){30, 30, 50, 255});
-    DrawTextEx(fonte_jogo, "TOP 5 PONTUACOES", (Vector2){LARGURA_TELA/2 - 150, 50}, 36, 2, GOLD);
+// ImplementaÁıes restantes de menus (simplificadas)
+void Desenha_scoreboard(TIPO_SCORE ranking[])
+{
+    DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, (Color)
+    {
+        30, 30, 50, 255
+    });
+    DrawTextEx(fonte_jogo, "TOP 5 PONTUACOES", (Vector2)
+    {
+        LARGURA_TELA/2 - 150, 50
+    }, 36, 2, GOLD);
 
-    for (int i = 0; i < 5; i++) {
-        DrawTextEx(fonte_jogo, TextFormat("%d. %s: %d", i+1, ranking[i].nome, ranking[i].score),
-                  (Vector2){LARGURA_TELA/2 - 150, 150 + i * 60}, 30, 2, WHITE);
+    for (int i = 0; i < 5; i++)
+    {
+        DrawTextEx(fonte_jogo, TextFormat("%d. %s: %d", i+1, ranking[i].nome, ranking[i].score), (Vector2)
+        {
+            LARGURA_TELA/2 - 150, 150 + i * 60
+        }, 30, 2, WHITE);
     }
 
-    DrawTextEx(fonte_jogo, "Pressione ENTER para voltar",
-              (Vector2){LARGURA_TELA/2 - 180, ALTURA_TELA - 50}, 20, 2, LIGHTGRAY);
+    DrawTextEx(fonte_jogo, "Pressione ENTER para voltar", (Vector2)
+    {
+        LARGURA_TELA/2 - 180, ALTURA_TELA - 50
+    }, 20, 2, LIGHTGRAY);
 }
 
-void Desenha_menu_derrota(int *selecao_derrota) {
-    DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, (Color){50, 0, 0, 200});
-    DrawTextEx(fonte_jogo, "GAME OVER", (Vector2){LARGURA_TELA/2 - 120, 150}, 48, 2, RED);
+void Desenha_menu_derrota(int *selecao_derrota)
+{
+    DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, (Color)
+    {
+        50, 0, 0, 200
+    });
+    DrawTextEx(fonte_jogo, "GAME OVER", (Vector2)
+    {
+        LARGURA_TELA/2 - 120, 150
+    }, 48, 2, RED);
 
-    const char *opcoes[] = {"Carregar Jogo", "Reiniciar Jogo", "Voltar ao Menu"};
-    for (int i = 0; i < 3; i++) {
+    const char *opcoes[] = {"Reiniciar Jogo", "Voltar ao Menu"};
+    for (int i = 0; i < 2; i++)
+    {
         Color cor = (i == *selecao_derrota) ? YELLOW : LIGHTGRAY;
-        DrawTextEx(fonte_jogo, opcoes[i], (Vector2){LARGURA_TELA/2 - 100, 250 + i * 60}, 30, 2, cor);
+        DrawTextEx(fonte_jogo, opcoes[i], (Vector2)
+        {
+            LARGURA_TELA/2 - 100, 250 + i * 60
+        }, 30, 2, cor);
     }
 }
 
-void Desenha_menu_vitoria(int *selecao_vitoria) {
-    DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, (Color){0, 50, 0, 200});
-    DrawTextEx(fonte_jogo, "VITORIA!", (Vector2){LARGURA_TELA/2 - 100, 150}, 48, 2, GREEN);
-    DrawTextEx(fonte_jogo, "Parabens! Voce completou todos os niveis!",
-              (Vector2){LARGURA_TELA/2 - 250, 220}, 24, 2, LIGHTGRAY);
+void Desenha_menu_vitoria(int *selecao_vitoria)
+{
+    DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, (Color)
+    {
+        0, 50, 0, 200
+    });
+    DrawTextEx(fonte_jogo, "VITORIA!", (Vector2)
+    {
+        LARGURA_TELA/2 - 100, 150
+    }, 48, 2, GREEN);
+    DrawTextEx(fonte_jogo, "Parabens! Voce completou todos os niveis!", (Vector2)
+    {
+        LARGURA_TELA/2 - 250, 220
+    }, 24, 2, LIGHTGRAY);
 
     const char *opcoes[] = {"Voltar ao Menu", "Sair"};
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 2; i++)
+    {
         Color cor = (i == *selecao_vitoria) ? YELLOW : LIGHTGRAY;
-        DrawTextEx(fonte_jogo, opcoes[i], (Vector2){LARGURA_TELA/2 - 80, 300 + i * 60}, 30, 2, cor);
+        DrawTextEx(fonte_jogo, opcoes[i], (Vector2)
+        {
+            LARGURA_TELA/2 - 80, 300 + i * 60
+        }, 30, 2, cor);
     }
 }
 
-void Movimento_jogador(Jogador_t *jogador, int tecla) {
+void Movimento_jogador(Jogador_t *jogador, int tecla)
+{
     int novo_x = jogador->x;
     int novo_y = jogador->y;
     Direcao_t nova_direcao = jogador->direcao;
 
-    switch (tecla) {
-        case KEY_W:
-        case KEY_UP:
-            novo_y--;
-            nova_direcao = NORTE;
-            break;
-        case KEY_S:
-        case KEY_DOWN:
-            novo_y++;
-            nova_direcao = SUL;
-            break;
-        case KEY_A:
-        case KEY_LEFT:
-            novo_x--;
-            nova_direcao = OESTE;
-            break;
-        case KEY_D:
-        case KEY_RIGHT:
-            novo_x++;
-            nova_direcao = LESTE;
-            break;
-        default:
-            return;
+    switch (tecla)
+    {
+    case KEY_W:
+    case KEY_UP:
+        novo_y--;
+        nova_direcao = NORTE;
+        break;
+
+    case KEY_S:
+    case KEY_DOWN:
+        novo_y++;
+        nova_direcao = SUL;
+        break;
+
+    case KEY_A:
+    case KEY_LEFT:
+        novo_x--;
+        nova_direcao = OESTE;
+        break;
+
+    case KEY_D:
+    case KEY_RIGHT:
+        novo_x++;
+        nova_direcao = LESTE;
+        break;
+
+    default:
+        return;
     }
 
-            // Verificar limites do mapa e colis√£o com paredes
-    if (novo_x >= 0 && novo_x < COLUNAS && novo_y >= 0 && novo_y < LINHAS) {
-        if (mapa[novo_y][novo_x] != 'P') {
+    // Verificar limites do mapa e colis„o com paredes
+    if (novo_x >= 0 && novo_x < COLUNAS && novo_y >= 0 && novo_y < LINHAS)
+    {
+        if (mapa[novo_y][novo_x] != 'P')
+        {
             jogador->x = novo_x;
             jogador->y = novo_y;
             jogador->direcao = nova_direcao;
@@ -811,53 +993,120 @@ void Movimento_jogador(Jogador_t *jogador, int tecla) {
 }
 
 
-void Movimento_monstros(Monstro_t monstros[], int numero_monstros) {
-    for (int i = 0; i < numero_monstros; i++) {
-        if (monstros[i].vivo){
+void Movimento_monstros(Monstro_t monstros[], int numero_monstros)
+{
+    for (int i = 0; i < numero_monstros; i++)
+    {
+        if (monstros[i].vivo)
+        {
 
-        // Atualizar temporizador de movimento
-        monstros[i].cooldown_mover -= GetFrameTime();
-        if (monstros[i].cooldown_mover <= 0) {
+            // Atualizar temporizador de movimento
+            monstros[i].cooldown_mover -= GetFrameTime();
+            if (monstros[i].cooldown_mover <= 0)
+            {
 
-        // Resetar temporizador (0.5-1.5 segundos)
-        monstros[i].cooldown_mover = 0.5f + (float)rand() / (float)RAND_MAX;
+                // Resetar temporizador (0.5-1.5 segundos)
+                monstros[i].cooldown_mover = 0.5f + (float)rand() / (float)RAND_MAX;
 
-        // Escolher dire√ß√£o aleat√≥ria
-        int direcao = rand() % 4;
-        int novo_x = monstros[i].x;
-        int novo_y = monstros[i].y;
+                // Escolher direÁ„o aleatÛria
+                int direcao = rand() % 4;
+                int novo_x = monstros[i].x;
+                int novo_y = monstros[i].y;
 
-        switch (direcao) {
-            case 0: novo_y--; break; // Norte
-            case 1: novo_y++; break; // Sul
-            case 2: novo_x++; break; // Leste
-            case 3: novo_x--; break; // Oeste
-        }
+                switch (direcao)
+                {
+                case 0:
+                    novo_y--;
+                    break; // Norte
 
-        // Verificar limites do mapa e colis√£o com paredes
-        if (novo_x >= 0 && novo_x < COLUNAS && novo_y >= 0 && novo_y < LINHAS) {
-            if (mapa[novo_y][novo_x] != 'P') {
-                monstros[i].x = novo_x;
-                monstros[i].y = novo_y;
-                monstros[i].direcao = direcao;
-            }}
+                case 1:
+                    novo_y++;
+                    break; // Sul
+
+                case 2:
+                    novo_x++;
+                    break; // Leste
+
+                case 3:
+                    novo_x--;
+                    break; // Oeste
+                }
+
+                // Verificar limites do mapa e colis„o com paredes
+                if (novo_x >= 0 && novo_x < COLUNAS && novo_y >= 0 && novo_y < LINHAS)
+                {
+                    if (mapa[novo_y][novo_x] != 'P')
+                    {
+                        monstros[i].x = novo_x;
+                        monstros[i].y = novo_y;
+                        monstros[i].direcao = direcao;
+                    }
+                }
+            }
         }
     }
-}}
-
-bool Posicao_valida(int x, int y, char mapa[LINHAS][COLUNAS]) {
-    return mapa[y][x] != 'P';  // ou o caracter que voc√™ usa pra parede
 }
 
-void Reseta_nivel(int level, Jogador_t *jogador, Monstro_t monstros[], int *numero_monstros, Vida_Extra_t vidas_extra[], int *numero_vidas_extra, Espada_t *espada) {
+void Nome_do_jogador(char nome[])
+{
+    int tam = 0;
+    bool concluido = false;
+    nome[0] = '\0';
 
-    // Manter pontua√ß√£o e vidas do jogador
+    while (!concluido && !WindowShouldClose())
+    {
+        // 1) Captura caracteres imprimÌveis
+        int c = GetCharPressed();
+        if (c > 0 && tam < MAX_NOME-1)
+        {
+            nome[tam++] = (char)c;
+            nome[tam] = '\0';
+        }
+
+        // 2) Backspace (remove um caractere)
+        if ((IsKeyPressed(KEY_BACKSPACE) || IsKeyDown(KEY_BACKSPACE)) && tam > 0)
+        {
+            tam--;
+            nome[tam] = '\0';
+        }
+
+        // 3) ENTER ó finaliza somente se j· tiver ao menos um caractere
+        if (IsKeyPressed(KEY_ENTER) && tam > 0)
+        {
+            concluido = true;
+        }
+
+        // 4) Desenha a tela de input
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+        DrawText("Digite seu nome:",
+                 GetScreenWidth()/2 - 100, GetScreenHeight()/2 - 50, 20, BLACK);
+        DrawRectangle(GetScreenWidth()/2 - 100, GetScreenHeight()/2 - 20,
+                      200, 30, LIGHTGRAY);
+        DrawText(nome,
+                 GetScreenWidth()/2 - 95, GetScreenHeight()/2 - 15, 20, BLACK);
+        EndDrawing();
+    }
+}
+
+bool Posicao_valida(int x, int y, char mapa[LINHAS][COLUNAS])
+{
+    return mapa[y][x] != 'P';  // ou o caracter que vocÍ usa pra parede
+}
+
+void Reseta_nivel(int level, Jogador_t *jogador, Monstro_t monstros[], int *numero_monstros, Vida_Extra_t vidas_extra[], int *numero_vidas_extra, Espada_t *espada)
+{
+
+    // Manter pontuaÁ„o e vidas do jogador
     int score = jogador->score;
     int vidas = jogador->vidas;
 
 
-    // Recarregar o n√≠vel
-    Comeca_jogo(&(Estado_jogo_t){0}, &level, jogador, monstros, numero_monstros, vidas_extra, numero_vidas_extra, espada);
+    // Recarregar o nÌvel
+    Comeca_jogo(&(Estado_jogo_t)
+    {
+        0
+    }, &level, jogador, monstros, numero_monstros, vidas_extra, numero_vidas_extra, espada);
 
     // Restaurar estado do jogador
     jogador->score = score;
@@ -866,54 +1115,63 @@ void Reseta_nivel(int level, Jogador_t *jogador, Monstro_t monstros[], int *nume
 }
 
 
-void Salva_ranking(Score_t ranking[]) {
-    FILE *file = fopen("ranking.bin", "wb");
-    if (!file) {return;};
+void Salva_ranking(TIPO_SCORE ranking[])
+{
+    FILE *file = fopen("conteudo/bin/ranking.bin", "wb");
+    if (!file)
+    {
+        return;
+    };
 
-    fwrite(ranking, sizeof(Score_t), 5, file);
+    fwrite(ranking, sizeof(TIPO_SCORE), MAX_RANKING, file);
     fclose(file);
 }
 
-void Teleportar_entidade(int *px, int *py, char mapa[LINHAS][COLUNAS]) {
+void Teleportar_entidade(int *px, int *py, char mapa[LINHAS][COLUNAS])
+{
     int nx, ny;
-    do {
+    do
+    {
         nx = rand() % COLUNAS;
         ny = rand() % LINHAS;
-    } while (!Posicao_valida(nx, ny, mapa));
+    }
+    while (!Posicao_valida(nx, ny, mapa));
     *px = nx;
     *py = ny;
 }
 
-void Usar_espada(Jogador_t *jogador, Monstro_t monstros[], int numero_monstros) {
+void Usar_espada(Jogador_t *jogador, Monstro_t monstros[], int numero_monstros)
+{
     int dx = 0, dy = 0;
-
-    // Determinar vetor de dire√ß√£o
-    switch (jogador->direcao) {
-        case NORTE: dy = -1; break;
-        case SUL:   dy = +1; break;
-        case LESTE: dx = +1; break;
-        case OESTE: dx = -1; break;
-        default: return; // dire√ß√£o inv√°lida
+    switch (jogador->direcao)
+    {
+    case NORTE:
+        dy = -1;
+        break;
+    case SUL:
+        dy = +1;
+        break;
+    case LESTE:
+        dx = +1;
+        break;
+    case OESTE:
+        dx = -1;
+        break;
     }
 
-    for (int i = 0; i < numero_monstros; i++) {
-        Monstro_t *m = &monstros[i];
-        if (m->vivo){
+    for (int i = 1; i <= ALCANCE_ESPADA && jogador->x + dx*i >= 0 && jogador->x + dx*i < COLUNAS && jogador->y + dy*i >= 0 && jogador->y + dy*i < LINHAS; i++)
+    {
+        int nx = jogador->x + dx * i;
+        int ny = jogador->y + dy * i;
 
-        int dist_x = abs(m->x - jogador->x);
-        int dist_y = abs(m->y - jogador->y);
-
-        bool alinhado_e_dentro_do_alcance = false;
-
-        if (dx != 0) { // Ataque na horizontal
-            alinhado_e_dentro_do_alcance = (m->y == jogador->y && dist_x <= ALCANCE_ESPADA);
-        } else if (dy != 0) { // Ataque na vertical
-            alinhado_e_dentro_do_alcance = (m->x == jogador->x && dist_y <= ALCANCE_ESPADA);
+        for (int j = 0; j < numero_monstros; j++)
+        {
+            if (monstros[j].vivo && monstros[j].x == nx && monstros[j].y == ny)
+            {
+                monstros[j].vivo = false;
+                jogador->score += monstros[j].pontos;
+                return;  // sai ao acertar o monstro
+            }
         }
-
-        if (alinhado_e_dentro_do_alcance) {
-            jogador->score += m->pontos;
-            m->vivo = false;
-        }}
     }
 }
